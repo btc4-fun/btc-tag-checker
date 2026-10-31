@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "fetched_at": "2026-10-31T17:27:33+00:00",
+  "source_sha256": "4ba8adad364868eff4461c6ac4f6726915f7d979cfc7cb50f041564ea9a2f3f2",
+  "security_source": "security.html",
+  "sources": {
+    "base.html": "5a6f01ceb0dd306187fcaa18ac5e022c63ed1b5f97cb5be0c0f5e052f4b8792e",
+    "guide.html": "f738dce35fabbb9dceb385b1d2e742ea9417552829ac5cc08198aac1f4ab5759",
+    "terms.html": "8ba21dba632dc684d827b2e2e94c71aeee5d32c9447bb04f4ae0aa680b4d2908",
+    "security.html": "c19041f0b5c502aa13bf810ff12055cd297c72b9d1905b3932e0d28f9c999bb2",
+    "_wallet_safety.html": "df55a096c3af13e40fae4daa5c9cca0c909fb58f04e09357c47f165efb9ce535",
+    "_purchase_warning.html": "0568cb9564001ae5eb62bb871325a8fc692feeb7f4faa47628517037d0d88aa5",
+    "_payment_details.html": "287ee63e607cacc5441018b6768ed4d7343fd58bb92f4d8b1925e2b0a620a37b"
+  },
+  "pages": {
+    "guide": "a8ff66e5134a22b7d991327cf4742a4fa0d8677c52c4cc61165f30984b075232",
+    "terms": "76576245c8b2fa157c179399c5f99b12467dd6f29e74813b32e2b56fcb4cbdb9",
+    "payment": "166477fc6717f6a32a739be4e5f2c63055b40aec431eaa44a4c06843db97b95b",
+    "security": "ab5f9bc5f1f4f296ebf246ed446e7f8bf2e33253ff82325df78ea2fe1f57bc39",
+    "costs": "a3d429e9d411daf6c2b24feed2898b661e664529cea1619b82c164a56dc92bbb"
+  },
+  "images_bundled": false,
+  "prices_bundled": false
+}

@@ -1,0 +1,150 @@
+name: BTC Tag Checker — Android
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      signed_release:
+        description: 'Build with the existing user signing key (fails if missing)'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  tests-lint-debug:
+    name: Tests, lint and debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a
+        with:
+          validate-wrappers: true
+      - name: Install pinned Android SDK packages
+        run: sdkmanager 'platforms;android-35' 'build-tools;36.0.0'
+      - name: Independent Python contracts and bundled content
+        run: |
+          mkdir -p build/reports
+          python3 tools/sync_public_content.py --check
+          python3 -m unittest discover -s tests -v 2>&1 | tee build/reports/python-tests.txt
+      - name: Tests, strict lint and debug build
+        run: ./gradlew :core:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --no-daemon --rerun-tasks --console=plain
+      - name: Validate debug artifact
+        run: python3 tools/verify_apk.py debug
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: BTC-Tag-Checker-debug-${{ github.sha }}
+          path: |
+            app/build/outputs/apk/debug/BTC-Tag-Checker-debug.apk
+            app/build/outputs/apk/debug/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: BTC-Tag-Checker-reports-${{ github.sha }}
+          path: |
+            build/reports/
+            core/build/reports/
+            core/build/test-results/
+            app/build/reports/
+            app/build/test-results/
+          if-no-files-found: error
+          retention-days: 14
+
+  signed-release:
+    name: Manually requested user-signed APK (no publishing)
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.signed_release }}
+    needs: tests-lint-debug
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a
+        with:
+          validate-wrappers: true
+          cache-disabled: true
+      - name: Install pinned Android SDK packages
+        run: sdkmanager 'platforms;android-35' 'build-tools;36.0.0'
+      - name: Sign with the existing user key
+        env:
+          ANDROID_RELEASE_KEYSTORE_BASE64: ${{ secrets.ANDROID_RELEASE_KEYSTORE_BASE64 }}
+          ANDROID_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_STORE_PASSWORD }}
+          ANDROID_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}
+          ANDROID_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          umask 077
+          export ANDROID_RELEASE_KEYSTORE="$RUNNER_TEMP/btc-tag-checker-release.jks"
+          cleanup() { rm -f -- "$ANDROID_RELEASE_KEYSTORE"; }
+          trap cleanup EXIT
+          trap 'exit 130' INT
+          trap 'exit 143' TERM
+          python3 - <<'PY'
+          import base64, os, sys
+          names = ('ANDROID_RELEASE_KEYSTORE_BASE64', 'ANDROID_RELEASE_STORE_PASSWORD', 'ANDROID_RELEASE_KEY_ALIAS', 'ANDROID_RELEASE_KEY_PASSWORD')
+          if any(not os.environ.get(name, '').strip() for name in names):
+              sys.exit('Signed release requested but signing secrets are missing. No key will be generated.')
+          try:
+              data = base64.b64decode(os.environ['ANDROID_RELEASE_KEYSTORE_BASE64'], validate=True)
+              if not data:
+                  raise ValueError()
+              fd = os.open(os.environ['ANDROID_RELEASE_KEYSTORE'], os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+              with os.fdopen(fd, 'wb') as stream:
+                  stream.write(data)
+          except Exception:
+              sys.exit('Could not prepare the supplied signing keystore.')
+          PY
+          unset ANDROID_RELEASE_KEYSTORE_BASE64
+          ./gradlew :core:test :app:testReleaseUnitTest :app:lintRelease :app:assembleRelease --no-daemon --rerun-tasks --console=plain
+      - name: Always remove temporary signing file
+        if: always()
+        run: rm -f -- "$RUNNER_TEMP/btc-tag-checker-release.jks"
+      - name: Validate release and match existing SMS app signer
+        env:
+          EXPECTED_RELEASE_CERT_SHA256: cdee481eac2d81904d0bed6281b956fe56e4f67ca37c5479592f4c89a18912f4
+        run: python3 tools/verify_apk.py release
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: BTC-Tag-Checker-release-${{ github.sha }}
+          path: |
+            app/build/outputs/apk/release/BTC-Tag-Checker-release.apk
+            app/build/outputs/apk/release/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: BTC-Tag-Checker-release-reports-${{ github.sha }}
+          path: |
+            core/build/reports/
+            core/build/test-results/
+            app/build/reports/
+            app/build/test-results/
+          if-no-files-found: error
+          retention-days: 14

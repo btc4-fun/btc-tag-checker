@@ -1,0 +1,17 @@
+.gradle/
+**/build/
+wrapper-bootstrap/
+local.properties
+*.jks
+*.keystore
+*.p12
+*.apk
+.env*
+__pycache__/
+*.log
+.verification/
+**/local.properties
+*.key
+*.pem
+*.aab
+.idea/

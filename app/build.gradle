@@ -1,0 +1,39 @@
+plugins { id 'com.android.application' }
+def signingValues = ['ANDROID_RELEASE_KEYSTORE', 'ANDROID_RELEASE_STORE_PASSWORD', 'ANDROID_RELEASE_KEY_ALIAS', 'ANDROID_RELEASE_KEY_PASSWORD'].collectEntries { [(it): System.getenv(it)] }
+def releaseReady = signingValues.values().every { it != null && !it.trim().isEmpty() } && file(signingValues.ANDROID_RELEASE_KEYSTORE ?: '__absent__').isFile()
+android {
+    namespace 'com.saebm.btcnfccustomer'
+    compileSdk 35
+    buildToolsVersion '36.0.0'
+    defaultConfig { applicationId 'com.saebm.btcnfccustomer'; minSdk 26; targetSdk 35; versionCode 1; versionName '0.1.0' }
+    signingConfigs {
+        if (releaseReady) {
+            release {
+                storeFile file(signingValues.ANDROID_RELEASE_KEYSTORE)
+                storePassword signingValues.ANDROID_RELEASE_STORE_PASSWORD
+                keyAlias signingValues.ANDROID_RELEASE_KEY_ALIAS
+                keyPassword signingValues.ANDROID_RELEASE_KEY_PASSWORD
+            }
+        }
+    }
+    buildTypes {
+        debug { applicationIdSuffix '.debug'; versionNameSuffix '-test-only'; resValue 'string', 'app_name', 'BTC Tag Checker (Debug)' }
+        release {
+            if (releaseReady) signingConfig signingConfigs.release
+            minifyEnabled false
+            resValue 'string', 'app_name', 'BTC Tag Checker'
+        }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    lint { abortOnError true; warningsAsErrors true }
+    applicationVariants.all { variant ->
+        variant.outputs.all { outputFileName = "BTC-Tag-Checker-${variant.buildType.name}.apk" }
+    }
+}
+// No unsigned release output and never fall back to a debug key.
+gradle.taskGraph.whenReady { graph ->
+    if (graph.allTasks.any { it.project == project && it.name.toLowerCase().contains('release') } && !releaseReady) {
+        throw new GradleException('Release disabled: supply all ANDROID_RELEASE_* signing variables and an existing keystore. No keys are generated.')
+    }
+}
+dependencies { implementation project(':core'); testImplementation 'junit:junit:4.13.2' }

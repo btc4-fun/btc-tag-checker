@@ -1,0 +1,7 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Public Android signing certificate fingerprint, not a private key"
+regexTarget = "secret"
+regexes = ['''^cdee481eac2d81904d0bed6281b956fe56e4f67ca37c5479592f4c89a18912f4$''']
