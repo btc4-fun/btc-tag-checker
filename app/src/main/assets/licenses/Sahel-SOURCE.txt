@@ -1,0 +1,10 @@
+Sahel v3.4.0, unmodified original Latin-inclusive regular and bold TTF files.
+Upstream: https://github.com/rastikerdar/sahel-font/releases/tag/v3.4.0
+Archive: https://github.com/rastikerdar/sahel-font/releases/download/v3.4.0/sahel-font-v3.4.0.zip
+Archive SHA-256: 3437606dbc3044289310dde3a9b63decdc7727e10dd01a4889cf5a04dfe070ad
+Sahel.ttf -> res/font/sahel_regular.ttf
+SHA-256: 5de2fe8cd1995f10fb5a570b66e3ff40183f16bc8c692519b61e8c0281679675
+Sahel-Bold.ttf -> res/font/sahel_bold.ttf
+SHA-256: d714fa224c92bc51d0e477337ef69e8818c2eff8f41e6698de35639e3857ae7b
+LICENSE -> assets/licenses/Sahel-LICENSE.txt (upstream SIL Open Font License)
+Bundled locally; no remote font requests.

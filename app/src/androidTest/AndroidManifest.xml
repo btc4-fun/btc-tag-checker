@@ -1,0 +1,3 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <instrumentation android:name="com.saebm.btcnfccustomer.VisualInstrumentation" android:targetPackage="com.saebm.btcnfccustomer.debug" />
+</manifest>

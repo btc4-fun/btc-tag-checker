@@ -74,60 +74,152 @@ public final class MainActivity extends Activity {
         super.onDestroy();
     }
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
+    private int color(int resource) { return getColor(resource); }
+    private android.graphics.drawable.GradientDrawable surface(int fill, int border) {
+        android.graphics.drawable.GradientDrawable shape = new android.graphics.drawable.GradientDrawable();
+        shape.setColor(color(fill)); shape.setCornerRadius(dp(5)); shape.setStroke(dp(1), color(border));
+        return shape;
+    }
     private void screen(String title) {
-        ScrollView scroll = new ScrollView(this);
-        scroll.setFillViewport(true);
-        content = new LinearLayout(this);
+        // Own edge-to-edge consistently: safe bars/cutouts outside, generous reading padding inside.
+        getWindow().getDecorView(); // Materialize decor before requesting its insets controller.
+        if (android.os.Build.VERSION.SDK_INT >= 30) {
+            getWindow().setDecorFitsSystemWindows(false);
+            getWindow().getInsetsController().setSystemBarsAppearance(
+                android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS | android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
+                android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS | android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
+        } else {
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+        }
+        ScrollView scroll = new ScrollView(this); scroll.setTag("site-scroll");
+        scroll.setFillViewport(true); scroll.setClipToPadding(true);
+        scroll.setBackgroundColor(color(R.color.paper));
+        android.widget.FrameLayout shell = new android.widget.FrameLayout(this);
+        content = new LinearLayout(this) {
+            @Override protected void onMeasure(int widthSpec, int heightSpec) {
+                int width = Math.min(View.MeasureSpec.getSize(widthSpec), dp(720));
+                super.onMeasure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY), heightSpec);
+            }
+        };
+        content.setTag("site-content"); content.setSaveEnabled(false);
         content.setOrientation(LinearLayout.VERTICAL);
         content.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
-        content.setPadding(dp(20), dp(16), dp(20), dp(24));
-        scroll.addView(content);
+        content.setPadding(dp(20), dp(28), dp(20), dp(40));
+        android.widget.FrameLayout.LayoutParams centered = new android.widget.FrameLayout.LayoutParams(-1, -2, Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        shell.addView(content, centered); scroll.addView(shell);
         scroll.setOnApplyWindowInsetsListener((view, insets) -> {
             if (android.os.Build.VERSION.SDK_INT >= 30) {
                 android.graphics.Insets bars = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
                 view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
             } else {
-                view.setPadding(insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(), insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom());
+                int left = insets.getSystemWindowInsetLeft(), top = insets.getSystemWindowInsetTop();
+                int right = insets.getSystemWindowInsetRight(), bottom = insets.getSystemWindowInsetBottom();
+                if (android.os.Build.VERSION.SDK_INT >= 28 && insets.getDisplayCutout() != null) {
+                    android.view.DisplayCutout cutout = insets.getDisplayCutout();
+                    left = Math.max(left, cutout.getSafeInsetLeft()); top = Math.max(top, cutout.getSafeInsetTop());
+                    right = Math.max(right, cutout.getSafeInsetRight()); bottom = Math.max(bottom, cutout.getSafeInsetBottom());
+                }
+                view.setPadding(left, top, right, bottom);
             }
             return insets;
         });
-        setContentView(scroll);
-        TextView heading = text(content, title, false); heading.setTextSize(25);
+        setContentView(scroll); scroll.requestApplyInsets();
+        LinearLayout brand = new LinearLayout(this); brand.setGravity(Gravity.CENTER_VERTICAL);
+        brand.setPadding(0, 0, 0, dp(24)); content.addView(brand);
+        android.widget.ImageView mark = new android.widget.ImageView(this);
+        mark.setTag("brand-mark"); mark.setImageResource(R.drawable.ic_customer);
+        mark.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        brand.addView(mark, new LinearLayout.LayoutParams(dp(43), dp(43)));
+        LinearLayout name = new LinearLayout(this); name.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams nameParams = new LinearLayout.LayoutParams(0, -2, 1); nameParams.setMarginStart(dp(13));
+        brand.addView(name, nameParams);
+        TextView brandName = text(name, "بیت‌کوین برای سرگرمی", false);
+        brandName.setTextSize(18); brandName.setPadding(0, 0, 0, 0); bold(brandName);
+        TextView subtitle = text(name, "btc4fun · btc4.fun", true);
+        subtitle.setTextSize(12); subtitle.setTextColor(color(R.color.muted));
+        subtitle.setGravity(Gravity.END); subtitle.setPadding(0, dp(2), 0, 0);
+        divider(content);
+        TextView eyebrow = text(content, "یک پاکت، یک شروع کنجکاوانه.", false);
+        eyebrow.setTextSize(12); eyebrow.setTextColor(color(R.color.accent)); eyebrow.setPadding(0, dp(24), 0, dp(6));
+        TextView heading = text(content, title, false); heading.setTextSize(28); bold(heading);
+        heading.setPadding(0, 0, 0, dp(16));
+    }
+    private void bold(TextView view) { view.setTypeface(getResources().getFont(R.font.sahel_bold)); }
+    private void divider(LinearLayout parent) {
+        View line = new View(this); line.setBackgroundColor(color(R.color.line));
+        parent.addView(line, new LinearLayout.LayoutParams(-1, dp(1)));
+    }
+    private LinearLayout section(String tag, String title, boolean boxed) {
+        LinearLayout section = new LinearLayout(this); section.setTag(tag);
+        section.setOrientation(LinearLayout.VERTICAL); section.setSaveEnabled(false);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.topMargin = dp(24); content.addView(section, params);
+        if (boxed) { section.setBackground(surface(R.color.surface, R.color.line)); section.setPadding(dp(20), dp(16), dp(20), dp(20)); }
+        else { divider(section); section.setPadding(0, 0, 0, dp(8)); }
+        TextView heading = text(section, title, false); heading.setTextSize(19); bold(heading);
+        heading.setPadding(0, dp(16), 0, dp(8));
+        return section;
     }
     private TextView text(LinearLayout parent, String value, boolean ltr) {
         TextView view = new TextView(this);
-        view.setText(value); view.setTextSize(17); view.setTextColor(0xff152b29);
+        view.setText(value); view.setTextSize(15); view.setTextColor(color(R.color.ink));
+        view.setTypeface(getResources().getFont(R.font.sahel_regular));
+        view.setLineSpacing(dp(3), 1.25f);
         view.setTextDirection(ltr ? View.TEXT_DIRECTION_LTR : View.TEXT_DIRECTION_RTL);
         view.setLayoutDirection(ltr ? View.LAYOUT_DIRECTION_LTR : View.LAYOUT_DIRECTION_RTL);
         view.setGravity(Gravity.START);
-        view.setPadding(0, dp(8), 0, dp(8));
+        view.setPadding(0, dp(6), 0, dp(6));
         view.setTextIsSelectable(true);
         // Never let Android restore a previous UID/address or response into a new activity.
         view.setSaveEnabled(false);
-        parent.addView(view);
+        parent.addView(view, new LinearLayout.LayoutParams(-1, -2));
         return view;
     }
-    private Button button(String label, Runnable action) {
+    private Button button(String label, Runnable action) { return button(content, label, action, false); }
+    private Button button(LinearLayout parent, String label, Runnable action, boolean primary) {
         Button value = new Button(this); value.setText(label); value.setAllCaps(false);
-        value.setMinHeight(dp(48)); value.setOnClickListener(view -> action.run()); content.addView(value); return value;
+        value.setTypeface(getResources().getFont(R.font.sahel_bold)); value.setTextSize(14);
+        value.setTextDirection(View.TEXT_DIRECTION_RTL); value.setSaveEnabled(false);
+        value.setMinHeight(dp(48)); value.setMinimumHeight(dp(48));
+        value.setPadding(dp(16), dp(12), dp(16), dp(12));
+        value.setStateListAnimator(null); value.setElevation(0);
+        android.graphics.drawable.StateListDrawable backgrounds = new android.graphics.drawable.StateListDrawable();
+        backgrounds.addState(new int[]{-android.R.attr.state_enabled}, surface(R.color.soft, R.color.line));
+        backgrounds.addState(new int[]{}, surface(primary ? R.color.ink : R.color.paper, R.color.ink));
+        value.setBackground(new android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(color(R.color.line)), backgrounds, null));
+        value.setTextColor(new android.content.res.ColorStateList(new int[][]{new int[]{-android.R.attr.state_enabled}, new int[]{}}, new int[]{color(R.color.muted), color(primary ? R.color.paper : R.color.ink)}));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2); params.topMargin = dp(12);
+        value.setOnClickListener(view -> action.run()); parent.addView(value, params); return value;
     }
     private void showInquiry() {
         cancelRequest(); stopReading(); inquiry = true; uid = null; cursor = null; cursors.clear();
-        screen(getString(R.string.app_name));
-        text(content, "این برنامه فقط شناسهٔ عمومی برچسب را می‌خواند؛ چیزی روی برچسب نمی‌نویسد. کلید خصوصی یا کلمات بازیابی را هرگز اینجا وارد نکنید.", false);
-        text(content, "شناسهٔ برچسب قابل کپی است؛ تطابق شناسه، اثبات اصالت پاکت، مالکیت یا انحصار دسترسی به دارایی نیست.", false);
-        text(content, "پس از رضایت شما، شناسه به سرور سایت ارسال می‌شود. سرور آدرس عمومی مربوط به آن را برای دریافت موجودی و تاریخچه به سرویس زیر می‌فرستد؛ این سرویس می‌تواند آدرس و درخواست سرور را ببیند.", false);
-        text(content, "btc4.fun → Blockstream", true);
-        scan = button("اسکن برچسب — بدون ارسال خودکار", this::beginScan);
-        request = button("رضایت و استعلام همین برچسب", () -> confirmRequest(null));
-        status = text(content, "هنوز برچسبی خوانده نشده و نتیجه‌ای دریافت نشده است.", false);
-        result = new LinearLayout(this); result.setOrientation(LinearLayout.VERTICAL); content.addView(result);
-        next = button("صفحهٔ بعدِ تاریخچه — درخواست دستی", () -> confirmRequest(cursor));
-        button("راهنمای آفلاین پاکت", () -> showPublic("guide", "راهنمای پاکت"));
-        button("شرایط و مسئولیت‌ها — آفلاین", () -> showPublic("terms", "شرایط و مسئولیت‌ها"));
-        button("اطلاعات پرداخت — نسخهٔ آفلاین", () -> showPublic("payment", "اطلاعات پرداخت"));
-        button("امنیت و نگهداری — آفلاین", () -> showPublic("security", "امنیت و نگهداری"));
-        button("قیمت و هزینه‌ها", () -> showPublic("costs", "قیمت و هزینه‌ها"));
+        screen("استعلام برچسب");
+        TextView deck = text(content, "شناسهٔ عمومی پاکت را بخوانید؛ موجودی و تاریخچه را فقط با اجازهٔ خودتان دریافت کنید.", false);
+        deck.setTextColor(color(R.color.muted));
+        LinearLayout scanSection = section("scan-section", "خواندن برچسب", false);
+        text(scanSection, "برچسب را به پشت گوشی نزدیک کنید. اسکن فقط شناسه را می‌خواند؛ چیزی روی برچسب نمی‌نویسد و خودکار ارسال نمی‌کند.", false).setTextColor(color(R.color.muted));
+        scan = button(scanSection, "اسکن برچسب", this::beginScan, true);
+        request = button(scanSection, "رضایت و استعلام همین برچسب", () -> confirmRequest(null), false);
+        status = text(scanSection, "هنوز برچسبی خوانده نشده و نتیجه‌ای دریافت نشده است.", false);
+        status.setTextSize(13); status.setTextColor(color(R.color.muted));
+        status.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+        LinearLayout resultSection = section("result-section", "نتیجهٔ استعلام", true);
+        result = new LinearLayout(this); result.setOrientation(LinearLayout.VERTICAL); resultSection.addView(result);
+        text(result, "هنوز نتیجه‌ای دریافت نشده است.", false).setTextColor(color(R.color.muted));
+        next = button(resultSection, "صفحهٔ بعدِ تاریخچه — درخواست دستی", () -> confirmRequest(cursor), false);
+        LinearLayout safety = section("privacy-section", "پیش از استعلام", false);
+        text(safety, "کلید خصوصی یا کلمات بازیابی را هرگز اینجا وارد نکنید. شناسهٔ برچسب قابل کپی است؛ تطابق آن اثبات اصالت پاکت، مالکیت یا انحصار دسترسی به دارایی نیست.", false);
+        text(safety, "فقط پس از رضایت شما، شناسه به سایت ارسال می‌شود. سایت آدرس عمومی را برای دریافت موجودی و تاریخچه به بلاک‌استریم می‌فرستد؛ این سرویس آدرس و درخواست سرور را می‌بیند.", false).setTextColor(color(R.color.muted));
+        text(safety, "btc4.fun → Blockstream", true).setTextColor(color(R.color.accent));
+        LinearLayout links = section("public-section", "راهنماهای پاکت", false);
+        text(links, "مطالب زیر داخل برنامه‌اند؛ خواندن آن‌ها به اینترنت نیاز ندارد.", false).setTextColor(color(R.color.muted));
+        button(links, "راهنمای آفلاین پاکت", () -> showPublic("guide", "راهنمای پاکت"), false);
+        button(links, "شرایط و مسئولیت‌ها — آفلاین", () -> showPublic("terms", "شرایط و مسئولیت‌ها"), false);
+        button(links, "اطلاعات پرداخت — نسخهٔ آفلاین", () -> showPublic("payment", "اطلاعات پرداخت"), false);
+        button(links, "امنیت و نگهداری — آفلاین", () -> showPublic("security", "امنیت و نگهداری"), false);
+        button(links, "قیمت و هزینه‌ها", () -> showPublic("costs", "قیمت و هزینه‌ها"), false);
+        TextView footer = text(content, "برای یاد گرفتن و تجربه کردن؛ نه وعدهٔ ثروتمند شدن.", false);
+        footer.setTextSize(12); footer.setTextColor(color(R.color.muted)); footer.setPadding(0, dp(32), 0, 0);
         updateButtons();
     }
     private void updateButtons() {
@@ -172,7 +264,27 @@ public final class MainActivity extends Activity {
             .setNegativeButton("لغو", (dialog, which) -> consent = null)
             .setPositiveButton("ارسال همین درخواست", (dialog, which) -> { consent = null; fetch(after); }).create();
         consent.show();
-        consent.getWindow().getDecorView().setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+        styleDialog(consent);
+    }
+    private void styleDialog(AlertDialog dialog) {
+        View decor = dialog.getWindow().getDecorView();
+        decor.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+        styleDialogText(decor);
+    }
+    private void styleDialogText(View view) {
+        if (view instanceof TextView) {
+            TextView text = (TextView) view;
+            boolean strong = view instanceof Button || (text.getTypeface() != null && text.getTypeface().isBold());
+            text.setTypeface(getResources().getFont(strong ? R.font.sahel_bold : R.font.sahel_regular));
+            text.setTextDirection(View.TEXT_DIRECTION_RTL);
+            text.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+            if (!(text instanceof Button)) text.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+            text.setSaveEnabled(false);
+        }
+        if (view instanceof android.view.ViewGroup) {
+            android.view.ViewGroup group = (android.view.ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) styleDialogText(group.getChildAt(i));
+        }
     }
     private void fetch(String after) {
         if (!active || uid == null) return;
@@ -268,12 +380,16 @@ public final class MainActivity extends Activity {
     }
     private void openPublic(String page) {
         if (!Arrays.asList("guide", "terms", "costs", "security").contains(page)) return;
-        new AlertDialog.Builder(this).setTitle("مرورگر خارجی")
+        AlertDialog external = new AlertDialog.Builder(this).setTitle("مرورگر خارجی")
             .setMessage("صفحهٔ عمومی سایت در مرورگر باز می‌شود. اطلاعات اتصال شما برای سایت قابل مشاهده است؛ هیچ شناسهٔ برچسب یا آدرس کیف پول به پیوند اضافه نمی‌شود.")
             .setNegativeButton("لغو", null).setPositiveButton("باز کردن", (dialog, which) -> {
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://btc4.fun/" + page));
                 intent.addCategory(Intent.CATEGORY_BROWSABLE);
-                try { startActivity(intent); } catch (ActivityNotFoundException ex) { new AlertDialog.Builder(this).setMessage("مرورگر قابل استفاده یافت نشد.").setPositiveButton("بستن", null).show(); }
+                try { startActivity(intent); } catch (ActivityNotFoundException ex) {
+                    AlertDialog missing = new AlertDialog.Builder(this).setMessage("مرورگر قابل استفاده یافت نشد.").setPositiveButton("بستن", null).show();
+                    styleDialog(missing);
+                }
             }).show();
+        styleDialog(external);
     }
 }

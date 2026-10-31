@@ -1,1 +1,12 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="48dp" android:height="48dp" android:viewportWidth="48" android:viewportHeight="48"><path android:fillColor="#006B54" android:pathData="M0,0h48v48h-48z"/><path android:strokeColor="#FFFFFF" android:strokeWidth="2" android:fillColor="#00000000" android:pathData="M8,14h32v22h-32zM8,14l16,12l16,-12M19,8h10"/></vector>
+<!-- Site brand: 43px outlined circle, 29px Bitcoin sign, -12 degree tilt.
+     Custom vector geometry (not an envelope and not a font-dependent glyph). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="43dp" android:height="43dp"
+    android:viewportWidth="43" android:viewportHeight="43">
+    <path android:fillColor="@color/paper" android:strokeColor="@color/accent"
+        android:strokeWidth="1" android:pathData="M21.5,0.5 A21,21 0,1 1,21.5,42.5 A21,21 0,1 1,21.5,0.5 Z" />
+    <group android:rotation="-12" android:pivotX="21.5" android:pivotY="21.5">
+        <path android:fillColor="@color/accent" android:fillType="evenOdd"
+            android:pathData="M13.5,11.5 L23,11.5 C28,11.5 30.2,13.5 30.2,16.5 C30.2,18.7 28.8,20.2 26.7,20.8 C29.6,21.3 31.2,23.2 31.2,25.8 C31.2,29.5 28.3,31.5 23,31.5 L13.5,31.5 L13.5,29.5 L16,29.5 L16,13.5 L13.5,13.5 Z M20,14 L20,19.8 L22.5,19.8 C25,19.8 26.2,18.8 26.2,16.8 C26.2,14.9 25,14 22.5,14 Z M20,22.2 L20,29 L22.7,29 C25.6,29 27,28 27,25.7 C27,23.4 25.6,22.2 22.7,22.2 Z M19,7 L21,7 L21,11.5 L19,11.5 Z M23,7 L25,7 L25,11.5 L23,11.5 Z M19,31.5 L21,31.5 L21,36 L19,36 Z M23,31.5 L25,31.5 L25,36 L23,36 Z" />
+    </group>
+</vector>

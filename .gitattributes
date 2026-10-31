@@ -1,1 +1,3 @@
 *.bat text eol=crlf whitespace=cr-at-eol
+# Preserve upstream license bytes, including its original trailing whitespace.
+app/src/main/assets/licenses/Sahel-LICENSE.txt -whitespace

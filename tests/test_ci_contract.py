@@ -63,5 +63,5 @@ class CiContract(unittest.TestCase):
   self.assertIn("resValue 'string', 'app_name', 'BTC Tag Checker (Debug)'",text)
   self.assertIn('BTC-Tag-Checker-${variant.buildType.name}.apk',text)
   self.assertIn('ANDROID_RELEASE_STORE_PASSWORD',text)
-  self.assertIn("versionCode 1; versionName '0.1.0'",text)
+  self.assertIn("versionCode 2; versionName '0.1.1'",text)
 if __name__=='__main__':unittest.main()
