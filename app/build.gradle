@@ -5,7 +5,7 @@ android {
     namespace 'com.saebm.btcnfccustomer'
     compileSdk 35
     buildToolsVersion '36.0.0'
-    defaultConfig { applicationId 'com.saebm.btcnfccustomer'; minSdk 26; targetSdk 35; versionCode 2; versionName '0.1.1'; testInstrumentationRunner 'com.saebm.btcnfccustomer.VisualInstrumentation' }
+    defaultConfig { applicationId 'com.saebm.btcnfccustomer'; minSdk 26; targetSdk 35; versionCode 3; versionName '0.1.2'; testInstrumentationRunner 'com.saebm.btcnfccustomer.VisualInstrumentation' }
     signingConfigs {
         if (releaseReady) {
             release {
@@ -17,17 +17,17 @@ android {
         }
     }
     buildTypes {
-        debug { applicationIdSuffix '.debug'; versionNameSuffix '-test-only'; resValue 'string', 'app_name', 'BTC Tag Checker (Debug)' }
+        debug { applicationIdSuffix '.debug'; versionNameSuffix '-test-only'; resValue 'string', 'app_name', 'btc4fun (Debug)' }
         release {
             if (releaseReady) signingConfig signingConfigs.release
             minifyEnabled false
-            resValue 'string', 'app_name', 'BTC Tag Checker'
+            resValue 'string', 'app_name', 'btc4fun'
         }
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     lint { abortOnError true; warningsAsErrors true }
     applicationVariants.all { variant ->
-        variant.outputs.all { outputFileName = "BTC-Tag-Checker-${variant.buildType.name}.apk" }
+        variant.outputs.all { outputFileName = "btc4fun-${variant.buildType.name}.apk" }
     }
 }
 // No unsigned release output and never fall back to a debug key.

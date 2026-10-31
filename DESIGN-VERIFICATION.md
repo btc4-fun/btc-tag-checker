@@ -1,5 +1,7 @@
 # Website-matched native design
 
+This is the historical code 2 / 0.1.1 design evidence, not a claim about the latest artifact. Current identity, artifact and checks are in `VERIFICATION.md`.
+
 The customer app follows the existing public website, not a separate Material visual system:
 
 - continuous paper `#f7f4eb`, ink `#292922`, muted `#68665c`, burnt-orange `#b94e2d`, surface `#fffcf5`, fine border `#dcd7c9`;
@@ -31,7 +33,7 @@ The suspected Java doubled-escape defect is **not a bug**: Java string escaping 
 The framework-only `VisualInstrumentation` adds no test library dependency. It checks real native views, font identity, insets and reading width, offline payment paragraph direction, disabled pre-scan request, and consent cancellation without creating a network client. Its synthetic UID is test-only and is never submitted. Screenshot capture also lives only in the test APK, not in the distributable app.
 
 ```sh
-adb -s emulator-5556 install -r app/build/outputs/apk/debug/BTC-Tag-Checker-debug.apk
+adb -s emulator-5556 install -r app/build/outputs/apk/debug/btc4fun-debug.apk
 adb -s emulator-5556 install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 adb -s emulator-5556 shell am instrument -w com.saebm.btcnfccustomer.debug.test/com.saebm.btcnfccustomer.VisualInstrumentation
 # Optional capture values: portrait, footer, payment, consent, landscape.

@@ -12,10 +12,10 @@ class ArtifactVerification(unittest.TestCase):
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         metadata = {'applicationId': 'com.saebm.btcnfccustomer.debug', 'elements': [
-            {'versionCode': 1, 'versionName': '0.1.0-test-only', 'outputFile': 'BTC-Tag-Checker-debug.apk'}]}
-        badging = "package: name='com.saebm.btcnfccustomer.debug' versionCode='1' versionName='0.1.0-test-only'\napplication-label:'BTC Tag Checker (Debug)'\n"
+            {'versionCode': 3, 'versionName': '0.1.2-test-only', 'outputFile': 'btc4fun-debug.apk'}]}
+        badging = "package: name='com.saebm.btcnfccustomer.debug' versionCode='3' versionName='0.1.2-test-only'\napplication-label:'btc4fun (Debug)'\n"
         module.validate_identity(metadata, badging, 'debug')
-        for old, new in [('com.saebm.btcnfccustomer.debug', 'wrong.id'), ("versionCode='1'", "versionCode='2'"), ('BTC Tag Checker (Debug)', 'Old Name')]:
+        for old, new in [('com.saebm.btcnfccustomer.debug', 'wrong.id'), ("versionCode='3'", "versionCode='2'"), ('btc4fun (Debug)', 'Old Name')]:
             with self.subTest(old=old), self.assertRaises(ValueError):
                 module.validate_identity(metadata, badging.replace(old, new), 'debug')
         cert = 'a'*64

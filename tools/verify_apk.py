@@ -14,14 +14,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def validate_identity(metadata, badging, variant):
     element, = metadata['elements']
-    expected_file = f'BTC-Tag-Checker-{variant}.apk'
+    expected_file = f'btc4fun-{variant}.apk'
     if element['outputFile'] != expected_file:
         raise ValueError('Unexpected APK filename')
     match = re.search(r"package: name='([^']+)' versionCode='([^']+)' versionName='([^']+)'", badging)
     expected = (metadata['applicationId'], str(element['versionCode']), element['versionName'])
     if match is None or match.groups() != expected:
         raise ValueError('APK identity differs from Gradle output metadata')
-    label = 'BTC Tag Checker' + (' (Debug)' if variant == 'debug' else '')
+    label = 'btc4fun' + (' (Debug)' if variant == 'debug' else '')
     if f"application-label:'{label}'" not in badging:
         raise ValueError('APK display label mismatch')
 
@@ -38,7 +38,7 @@ def main():
     args = parser.parse_args()
     folder = ROOT/f'app/build/outputs/apk/{args.variant}'
     metadata = json.loads((folder/'output-metadata.json').read_text())
-    apk = folder/f'BTC-Tag-Checker-{args.variant}.apk'
+    apk = folder/f'btc4fun-{args.variant}.apk'
     sdk = Path(os.environ.get('ANDROID_HOME') or os.environ['ANDROID_SDK_ROOT'])
     gradle = (ROOT/'app/build.gradle').read_text()
     tools_version = re.search(r"buildToolsVersion '([^']+)'", gradle).group(1)

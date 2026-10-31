@@ -119,10 +119,14 @@ public final class VisualInstrumentation extends Instrumentation {
                     AlertDialog dialog=(AlertDialog)field("consent");
                     check(dialog!=null && dialog.isShowing(),"explicit consent required");
                     verifyFonts(dialog.getWindow().getDecorView());
-                    for(View v:views(dialog.getWindow().getDecorView())) if(v instanceof TextView && ((TextView)v).getText().toString().equals("اجازهٔ ارسال درخواست عمومی")) {
+                    boolean titleFound=false;
+                    for(View v:views(dialog.getWindow().getDecorView())) if(v instanceof TextView && ((TextView)v).getText().toString().equals("اجازه می‌دهید؟")) {
+                        titleFound=true;
                         TextView title=(TextView)v;
                         check(title.getTextDirection()==View.TEXT_DIRECTION_RTL && title.getLayoutDirection()==View.LAYOUT_DIRECTION_RTL && (title.getGravity() & Gravity.RELATIVE_HORIZONTAL_GRAVITY_MASK)==Gravity.START,"dialog title aligns with RTL body");
                     }
+                    check(titleFound,"plain consent title exists");
+                    check(dialog.getButton(AlertDialog.BUTTON_POSITIVE).getText().toString().equals("فقط همین بار ارسال کن"),"consent is for one request only");
                     dialog.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();
                     check(field("client")==null,"cancel consent must not create network client");
                     invoke("showInquiry",new Class<?>[]{});

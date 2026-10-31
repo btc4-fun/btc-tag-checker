@@ -58,7 +58,7 @@ public final class MainActivity extends Activity {
     }
     @Override public void onResume() {
         super.onResume(); active = true;
-        if (inquiry && status != null && uid == null) status.setText(nfc == null ? "این دستگاه خوانشگر نزدیک‌برد ندارد؛ راهنماهای آفلاین در دسترس‌اند." : !nfc.isEnabled() ? "خوانشگر نزدیک‌برد خاموش است. آن را در تنظیمات دستگاه روشن کنید." : "برای خواندن شناسه، دکمهٔ اسکن را بزنید. هیچ درخواستی خودکار ارسال نمی‌شود.");
+        if (inquiry && status != null && uid == null) status.setText(nfc == null ? "این گوشی نمی‌تواند برچسب را بخواند. راهنماها را می‌توانید بدون اینترنت بخوانید." : !nfc.isEnabled() ? "خواندن برچسب خاموش است. در تنظیمات گوشی، گزینهٔ ارتباط نزدیک را روشن کنید. نام این گزینه در راهنمای پایین آمده است." : "دکمهٔ خواندن برچسب را بزنید. چیزی خودکار ارسال نمی‌شود.");
         updateButtons();
     }
     @Override public void onPause() {
@@ -66,7 +66,7 @@ public final class MainActivity extends Activity {
         stopReading();
         if (consent != null) { consent.dismiss(); consent = null; }
         cancelRequest();
-        if (inquiry && status != null) status.setText("برنامه از پیش‌زمینه خارج شد؛ درخواست جاری لغو شد. برای دریافت اطلاعات تازه دوباره انتخاب کنید.");
+        if (inquiry && status != null) status.setText("با خروج از این صفحه، دریافت اطلاعات متوقف شد. برای اطلاعات تازه، دوباره دکمهٔ دیدن موجودی را بزنید.");
         super.onPause();
     }
     @Override public void onDestroy() {
@@ -193,30 +193,32 @@ public final class MainActivity extends Activity {
     }
     private void showInquiry() {
         cancelRequest(); stopReading(); inquiry = true; uid = null; cursor = null; cursors.clear();
-        screen("استعلام برچسب");
-        TextView deck = text(content, "شناسهٔ عمومی پاکت را بخوانید؛ موجودی و تاریخچه را فقط با اجازهٔ خودتان دریافت کنید.", false);
+        screen("موجودی پاکت");
+        TextView deck = text(content, "اول برچسب پاکت را بخوانید. بعد، با اجازهٔ شما موجودی و تراکنش‌ها از اینترنت دریافت می‌شود.", false);
         deck.setTextColor(color(R.color.muted));
         LinearLayout scanSection = section("scan-section", "خواندن برچسب", false);
-        text(scanSection, "برچسب را به پشت گوشی نزدیک کنید. اسکن فقط شناسه را می‌خواند؛ چیزی روی برچسب نمی‌نویسد و خودکار ارسال نمی‌کند.", false).setTextColor(color(R.color.muted));
-        scan = button(scanSection, "اسکن برچسب", this::beginScan, true);
-        request = button(scanSection, "رضایت و استعلام همین برچسب", () -> confirmRequest(null), false);
-        status = text(scanSection, "هنوز برچسبی خوانده نشده و نتیجه‌ای دریافت نشده است.", false);
+        text(scanSection, "برچسب همان تراشهٔ کوچک روی پاکت است. خواندن برچسب یعنی نزدیک کردن پشت گوشی به آن. فقط شمارهٔ شناسایی برچسب خوانده می‌شود. چیزی روی برچسب نوشته یا خودکار ارسال نمی‌شود.", false).setTextColor(color(R.color.muted));
+        text(scanSection, "نام گزینهٔ ارتباط نزدیک در تنظیمات گوشی:", false).setTextColor(color(R.color.muted));
+        text(scanSection, "NFC", true).setTextColor(color(R.color.muted));
+        scan = button(scanSection, "خواندن برچسب", this::beginScan, true);
+        request = button(scanSection, "دیدن موجودی و تراکنش‌ها", () -> confirmRequest(null), false);
+        status = text(scanSection, "هنوز برچسبی خوانده نشده است.", false);
         status.setTextSize(13); status.setTextColor(color(R.color.muted));
         status.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
-        LinearLayout resultSection = section("result-section", "نتیجهٔ استعلام", true);
+        LinearLayout resultSection = section("result-section", "موجودی و تراکنش‌ها", true);
         result = new LinearLayout(this); result.setOrientation(LinearLayout.VERTICAL); resultSection.addView(result);
         text(result, "هنوز نتیجه‌ای دریافت نشده است.", false).setTextColor(color(R.color.muted));
-        next = button(resultSection, "صفحهٔ بعدِ تاریخچه — درخواست دستی", () -> confirmRequest(cursor), false);
-        LinearLayout safety = section("privacy-section", "پیش از استعلام", false);
-        text(safety, "کلید خصوصی یا کلمات بازیابی را هرگز اینجا وارد نکنید. شناسهٔ برچسب قابل کپی است؛ تطابق آن اثبات اصالت پاکت، مالکیت یا انحصار دسترسی به دارایی نیست.", false);
-        text(safety, "فقط پس از رضایت شما، شناسه به سایت ارسال می‌شود. سایت آدرس عمومی را برای دریافت موجودی و تاریخچه به بلاک‌استریم می‌فرستد؛ این سرویس آدرس و درخواست سرور را می‌بیند.", false).setTextColor(color(R.color.muted));
+        next = button(resultSection, "دیدن تراکنش‌های بیشتر", () -> confirmRequest(cursor), false);
+        LinearLayout safety = section("privacy-section", "قبل از دیدن موجودی", false);
+        text(safety, "کلید خصوصی یا کلمات بازیابی را هرگز اینجا وارد نکنید. شمارهٔ برچسب را می‌توان کپی کرد. این نتیجه اصل بودن پاکت یا مالکیت شما را ثابت نمی‌کند. تضمین نمی‌کند که فقط شما به پول دسترسی دارید.", false);
+        text(safety, "فقط با اجازهٔ شما، شمارهٔ برچسب به سایت فرستاده می‌شود. سایت آدرس عمومی کیف پول را به بلاک‌استریم می‌فرستد. این سرویس آدرس و درخواست سایت را می‌بیند. برنامه خودکار بررسی یا دوباره تلاش نمی‌کند.", false).setTextColor(color(R.color.muted));
         text(safety, "btc4.fun → Blockstream", true).setTextColor(color(R.color.accent));
         LinearLayout links = section("public-section", "راهنماهای پاکت", false);
-        text(links, "مطالب زیر داخل برنامه‌اند؛ خواندن آن‌ها به اینترنت نیاز ندارد.", false).setTextColor(color(R.color.muted));
-        button(links, "راهنمای آفلاین پاکت", () -> showPublic("guide", "راهنمای پاکت"), false);
-        button(links, "شرایط و مسئولیت‌ها — آفلاین", () -> showPublic("terms", "شرایط و مسئولیت‌ها"), false);
-        button(links, "اطلاعات پرداخت — نسخهٔ آفلاین", () -> showPublic("payment", "اطلاعات پرداخت"), false);
-        button(links, "امنیت و نگهداری — آفلاین", () -> showPublic("security", "امنیت و نگهداری"), false);
+        text(links, "راهنماهای زیر بدون اینترنت باز می‌شوند.", false).setTextColor(color(R.color.muted));
+        button(links, "راهنمای پاکت", () -> showPublic("guide", "راهنمای پاکت"), false);
+        button(links, "شرایط و مسئولیت‌ها", () -> showPublic("terms", "شرایط و مسئولیت‌ها"), false);
+        button(links, "اطلاعات پرداخت", () -> showPublic("payment", "اطلاعات پرداخت"), false);
+        button(links, "امنیت و نگهداری", () -> showPublic("security", "امنیت و نگهداری"), false);
         button(links, "قیمت و هزینه‌ها", () -> showPublic("costs", "قیمت و هزینه‌ها"), false);
         TextView footer = text(content, "برای یاد گرفتن و تجربه کردن؛ نه وعدهٔ ثروتمند شدن.", false);
         footer.setTextSize(12); footer.setTextColor(color(R.color.muted)); footer.setPadding(0, dp(32), 0, 0);
@@ -230,9 +232,9 @@ public final class MainActivity extends Activity {
     }
     private void beginScan() {
         cancelRequest(); uid = null; cursor = null; cursors.clear(); result.removeAllViews();
-        if (nfc == null || !nfc.isEnabled()) { status.setText("خوانشگر نزدیک‌برد در دسترس نیست یا خاموش است."); return; }
+        if (nfc == null || !nfc.isEnabled()) { status.setText("گوشی نمی‌تواند برچسب را بخواند. تنظیمات ارتباط نزدیک را بررسی کنید."); return; }
         final long scanToken = ++scanGeneration;
-        scanning = true; status.setText("برچسب را نزدیک دستگاه نگه دارید. فقط شناسه خوانده می‌شود؛ هنوز هیچ درخواست شبکه‌ای ارسال نشده است.");
+        scanning = true; status.setText("پشت گوشی را نزدیک برچسب نگه دارید. فقط شمارهٔ آن خوانده می‌شود. هنوز چیزی به اینترنت ارسال نشده است.");
         updateButtons();
         try {
             nfc.enableReaderMode(this, tag -> {
@@ -243,11 +245,11 @@ public final class MainActivity extends Activity {
                 main.post(() -> {
                     if (!active || !scanning || !inquiry || scanGeneration != scanToken) return;
                     stopReading(); uid = scanned;
-                    status.setText(scanned == null ? "طول شناسهٔ برچسب پشتیبانی نمی‌شود؛ چیزی ارسال نشد." : "شناسه خوانده شد. برای ارسال آن، دکمهٔ رضایت و استعلام را بزنید.");
+                    status.setText(scanned == null ? "این نوع برچسب قابل خواندن نیست. چیزی ارسال نشد." : "برچسب خوانده شد. برای ادامه، دکمهٔ دیدن موجودی و تراکنش‌ها را بزنید.");
                     updateButtons();
                 });
             }, NfcAdapter.FLAG_READER_NFC_A | NfcAdapter.FLAG_READER_NFC_B | NfcAdapter.FLAG_READER_NFC_F | NfcAdapter.FLAG_READER_NFC_V | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK, null);
-        } catch (IllegalStateException | SecurityException ex) { scanning = false; status.setText("فعال‌سازی خوانشگر ممکن نشد."); updateButtons(); }
+        } catch (IllegalStateException | SecurityException ex) { scanning = false; status.setText("خواندن برچسب شروع نشد. تنظیمات گوشی را بررسی کنید."); updateButtons(); }
     }
     private void stopReading() {
         scanGeneration++;
@@ -259,10 +261,10 @@ public final class MainActivity extends Activity {
     private void confirmRequest(String after) {
         if (uid == null || busy || !active) return;
         consent = new AlertDialog.Builder(this)
-            .setTitle("اجازهٔ ارسال درخواست عمومی")
-            .setMessage("شناسهٔ برچسب به سایت ارسال می‌شود. سرور آدرس عمومی کیف پول را به بلاک‌استریم می‌فرستد. این کار حریم خصوصی آدرس را کاهش می‌دهد. کلید یا کلمات بازیابی ارسال نمی‌شود. هیچ بررسی دوره‌ای یا تلاش مجدد خودکار وجود ندارد. ادامه می‌دهید؟")
+            .setTitle("اجازه می‌دهید؟")
+            .setMessage("برای دیدن موجودی یا تراکنش‌های بیشتر، شمارهٔ برچسب به سایت بیت‌کوین برای سرگرمی فرستاده می‌شود. سایت آدرس عمومی کیف پول را به بلاک‌استریم می‌فرستد. این سرویس آدرس و درخواست سایت را می‌بیند. پس این بررسی کاملاً خصوصی نیست. کلید خصوصی و کلمات بازیابی ارسال نمی‌شوند. برنامه خودکار بررسی یا دوباره تلاش نمی‌کند.")
             .setNegativeButton("لغو", (dialog, which) -> consent = null)
-            .setPositiveButton("ارسال همین درخواست", (dialog, which) -> { consent = null; fetch(after); }).create();
+            .setPositiveButton("فقط همین بار ارسال کن", (dialog, which) -> { consent = null; fetch(after); }).create();
         consent.show();
         styleDialog(consent);
     }
@@ -292,7 +294,7 @@ public final class MainActivity extends Activity {
         final long generation = gate.begin();
         final String requestedUid = uid;
         final Client transport = new Client(); client = transport; busy = true;
-        status.setText("در حال دریافت؛ نتیجهٔ قبلی، اگر نمایش داده شده، تازه نشده است."); updateButtons();
+        status.setText("در حال دریافت اطلاعات… اگر نتیجهٔ قبلی را می‌بینید، هنوز تازه نشده است."); updateButtons();
         WeakReference<MainActivity> owner = new WeakReference<>(this);
         work = worker.submit(() -> {
             Response response = null; Exception error = null;
@@ -318,13 +320,13 @@ public final class MainActivity extends Activity {
             if (error instanceof Client.Failure) {
                 Client.Failure failure = (Client.Failure) error;
                 switch (failure.status) {
-                    case 400: status.setText("درخواست یا شناسه از نظر سرور نامعتبر است."); break;
-                    case 404: status.setText("برچسب در سرور پیدا نشد؛ یا مسیر سرویس هنوز منتشر نشده است. این پیام به معنی موجودی صفر نیست."); break;
+                    case 400: status.setText("سایت شمارهٔ برچسب یا درخواست را نپذیرفت. نتیجهٔ تازه‌ای نداریم."); break;
+                    case 404: status.setText("برچسب پیدا نشد یا بخش بررسی سایت هنوز آماده نیست. این پیام به معنی موجودی صفر نیست."); break;
                     case 429: startCountdown(failure.retrySeconds); break;
-                    case 503: status.setText("سرویس موقتاً در دسترس نیست. نتیجه یا موجودی صفر استنباط نکنید."); break;
-                    default: status.setText("پاسخ ناموفق سرور؛ هیچ نتیجهٔ تازه‌ای دریافت نشد.");
+                    case 503: status.setText("سایت فعلاً نمی‌تواند اطلاعات بدهد. این پیام به معنی موجودی صفر نیست."); break;
+                    default: status.setText("سایت پاسخ نداد. نتیجهٔ تازه‌ای دریافت نشد.");
                 }
-            } else status.setText("دریافت ناموفق: مشکل شبکه، پایان مهلت یا پاسخ نامعتبر. هیچ نتیجهٔ تازه‌ای دریافت نشد؛ تلاش مجدد فقط با انتخاب شماست.");
+            } else status.setText("اطلاعات دریافت نشد. ممکن است اینترنت قطع باشد، پاسخ دیر رسیده باشد یا قابل خواندن نباشد. نتیجهٔ تازه‌ای نداریم. برنامه خودکار دوباره درخواست نمی‌فرستد.");
             updateButtons(); return;
         }
         if (after == null) cursors.clear(); else cursors.add(after);
@@ -333,21 +335,26 @@ public final class MainActivity extends Activity {
         if (repeated) cursor = null;
         result.removeAllViews();
         text(result, "شمارهٔ سریال", false); text(result, response.serial, true);
-        text(result, "آدرس عمومی — کامل تطبیق دهید", false); text(result, response.address, true);
-        text(result, "موجودی تأییدشده — ساتوشی صحیح", false); text(result, Long.toString(response.confirmedSats), true);
-        text(result, "تغییر خالص تأییدنشده — جدا از موجودی، با علامت؛ قطعی نیست", false); text(result, Response.signed(response.pendingDeltaSats), true);
-        text(result, "منبع گزارش‌شده توسط سرور", false); text(result, response.source, true);
-        text(result, "زمان آغاز دریافت گزارش‌شده توسط سرور؛ نه زمان منبع و نه تضمین تازه‌بودن", false); text(result, response.fetchedAt, true);
-        text(result, "داده‌ها هم‌زمان و اتمی نیستند؛ موجودی و تاریخچه ممکن است در زمان‌های متفاوت خوانده شده باشند. تاریخچه فقط تراکنش‌های تأییدشده را نشان می‌دهد؛ تراکنش‌های صف فقط در تغییر خالص موجودی لحاظ شده‌اند.", false);
-        text(result, "تاریخچهٔ تأییدشده — فقط همین صفحه؛ مبلغ هر ردیف تغییر خالص آدرس است، نه کل مبلغ تراکنش", false);
-        if (response.transactions.isEmpty()) text(result, "این صفحه ردیف تأییدشده‌ای ندارد؛ این به‌تنهایی نبود تمام سابقه را ثابت نمی‌کند.", false);
+        text(result, "آدرس عمومی کیف پول — همهٔ حروف و عددها را با آدرس روی پاکت مقایسه کنید", false); text(result, response.address, true);
+        text(result, "ساتوشی واحد کوچک بیت‌کوین است. تأییدشده یعنی شبکهٔ بیت‌کوین آن را ثبت کرده است.", false);
+        text(result, "موجودی تأییدشده، به ساتوشی", false); text(result, Long.toString(response.confirmedSats), true);
+        text(result, "این عدد تضمین نمی‌کند که همهٔ پول همین حالا قابل خرج کردن است.", false);
+        text(result, "در انتظار تأیید یعنی هنوز قطعی نشده است. این عدد جدا از موجودی تأییدشده است. علامت مثبت یعنی افزایش و علامت منفی یعنی کاهش.", false);
+        text(result, "تغییر موجودی در انتظار تأیید، به ساتوشی", false); text(result, Response.signed(response.pendingDeltaSats), true);
+        text(result, "منبع یعنی سرویسی که سایت اطلاعات را از آن گرفته است.", false);
+        text(result, "منبع اطلاعات، به گفتهٔ سایت", false); text(result, response.source, true);
+        text(result, "زمان شروع دریافت اطلاعات در سایت", false); text(result, response.fetchedAt, true);
+        text(result, "این زمان را سایت می‌دهد، نه منبع اطلاعات. این زمان تضمین نمی‌کند که اطلاعات همین حالا تازه است.", false);
+        text(result, "موجودی و تراکنش‌ها ممکن است در دو زمان متفاوت دریافت شده باشند. فهرست زیر فقط تراکنش‌های تأییدشده را نشان می‌دهد. تراکنش‌های در انتظار، فقط در عدد تغییر موجودی بالا آمده‌اند.", false);
+        text(result, "تراکنش‌های تأییدشده در این صفحه. مبلغ هر ردیف فقط تغییر پول این آدرس است، نه کل مبلغ تراکنش.", false);
+        if (response.transactions.isEmpty()) text(result, "در این صفحه تراکنش تأییدشده‌ای نیست. ممکن است تراکنش‌های دیگری وجود داشته باشد.", false);
         for (Response.Transaction tx : response.transactions) {
-            text(result, "شناسهٔ تراکنش تأییدشده", false); text(result, tx.txid, true);
-            text(result, "تغییر خالص — ساتوشی", false); text(result, Response.signed(tx.deltaSats), true);
-            text(result, "ارتفاع بلوک", false); text(result, Long.toString(tx.blockHeight), true);
-            text(result, "زمان بلوک — ثانیه از مبدأ یونیکس", false); text(result, Long.toString(tx.blockTime), true);
+            text(result, "شمارهٔ پیگیری تراکنش تأییدشده", false); text(result, tx.txid, true);
+            text(result, "تغییر پول این آدرس، به ساتوشی", false); text(result, Response.signed(tx.deltaSats), true);
+            text(result, "شمارهٔ بخش ثبت‌شده در شبکه (بلوک)", false); text(result, Long.toString(tx.blockHeight), true);
+            text(result, "زمان ثبت در شبکه — ثانیه از ابتدای سال ۱۹۷۰ میلادی", false); text(result, Long.toString(tx.blockTime), true);
         }
-        status.setText(repeated ? "پاسخ دریافت شد، اما نشانگر صفحه تکراری بود؛ ادامه متوقف شد. برای شروع دوباره، استعلام نخست را انتخاب کنید." : cursor == null ? "پاسخ دریافت شد. سرور نشانگر صفحهٔ بعد نداده است؛ به‌روزرسانی خودکار نداریم." : "پاسخ دریافت شد. صفحهٔ بعد فقط با انتخاب شما دریافت می‌شود.");
+        status.setText(repeated ? "اطلاعات رسید، اما نشانی ادامهٔ فهرست تکراری بود. ادامه متوقف شد. برای شروع دوباره، دکمهٔ دیدن موجودی را بزنید." : cursor == null ? "اطلاعات رسید. سایت صفحهٔ دیگری معرفی نکرد. اطلاعات خودکار تازه نمی‌شود." : "اطلاعات رسید. برای ادامه، دکمهٔ دیدن تراکنش‌های بیشتر را بزنید. صفحهٔ بعد ممکن است خالی باشد.");
         updateButtons();
     }
     private void startCountdown(int seconds) {
@@ -356,7 +363,7 @@ public final class MainActivity extends Activity {
             @Override public void run() {
                 if (!active || !inquiry) return;
                 long remaining = Math.max(0, (retryUntil - SystemClock.elapsedRealtime() + 999) / 1000);
-                status.setText("سرور درخواست‌های زیاد را رد کرد. زمان پیشنهادی انتظار به ثانیه:\n\n" + remaining + "\n\nاین شمارنده فقط نمایش محلی است، نه تضمین رفع یا اجرای محدودیت سرور. ارسال مجدد خودکار انجام نمی‌شود.");
+                status.setText("درخواست‌ها زیاد شده است. سایت پیشنهاد می‌کند کمی صبر کنید. زمان باقی‌مانده به ثانیه:\n\n" + remaining + "\n\nاین شمارنده فقط راهنماست. تمام شدن آن تضمین نمی‌کند که سایت آماده باشد یا محدودیت را بردارد. برنامه خودکار دوباره درخواست نمی‌فرستد.");
                 if (remaining > 0) main.postDelayed(this, 1000);
             }
         };
@@ -366,7 +373,7 @@ public final class MainActivity extends Activity {
         if (!Arrays.asList("guide", "terms", "payment", "security", "costs").contains(page)) return;
         cancelRequest(); stopReading(); inquiry = false; uid = null; cursor = null;
         screen(title);
-        button("بازگشت به استعلام", this::showInquiry);
+        button("بازگشت به موجودی پاکت", this::showInquiry);
         try (InputStream input = getAssets().open("public/" + page + ".txt")) {
             String body = RequestPolicy.read(input, RequestPolicy.MAX_BODY, System.nanoTime() + 2_000_000_000L);
             // Each paragraph has its own direction; account numbers and paths stay LTR.
@@ -374,19 +381,19 @@ public final class MainActivity extends Activity {
                 String trimmed = paragraph.trim();
                 if (!trimmed.isEmpty()) text(content, trimmed, !trimmed.matches("(?s).*[\\u0600-\\u06FF].*"));
             }
-        } catch (Exception ex) { text(content, "خواندن متن آفلاین ممکن نشد. نسخهٔ فعلی سایت را می‌توانید به انتخاب خود باز کنید.", false); }
-        button("باز کردن نسخهٔ فعلی در مرورگر خارجی", () -> openPublic(page.equals("payment") ? "costs" : page));
-        button("بازگشت به استعلام", this::showInquiry);
+        } catch (Exception ex) { text(content, "متن راهنما باز نشد. می‌توانید نسخهٔ تازهٔ آن را در سایت بخوانید.", false); }
+        button("دیدن نسخهٔ تازه در سایت", () -> openPublic(page.equals("payment") ? "costs" : page));
+        button("بازگشت به موجودی پاکت", this::showInquiry);
     }
     private void openPublic(String page) {
         if (!Arrays.asList("guide", "terms", "costs", "security").contains(page)) return;
-        AlertDialog external = new AlertDialog.Builder(this).setTitle("مرورگر خارجی")
-            .setMessage("صفحهٔ عمومی سایت در مرورگر باز می‌شود. اطلاعات اتصال شما برای سایت قابل مشاهده است؛ هیچ شناسهٔ برچسب یا آدرس کیف پول به پیوند اضافه نمی‌شود.")
+        AlertDialog external = new AlertDialog.Builder(this).setTitle("باز کردن سایت")
+            .setMessage("این صفحه در مرورگر گوشی باز می‌شود و اینترنت لازم دارد. سایت اطلاعات اتصال شما را می‌بیند. شمارهٔ برچسب و آدرس کیف پول به لینک اضافه نمی‌شوند.")
             .setNegativeButton("لغو", null).setPositiveButton("باز کردن", (dialog, which) -> {
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://btc4.fun/" + page));
                 intent.addCategory(Intent.CATEGORY_BROWSABLE);
                 try { startActivity(intent); } catch (ActivityNotFoundException ex) {
-                    AlertDialog missing = new AlertDialog.Builder(this).setMessage("مرورگر قابل استفاده یافت نشد.").setPositiveButton("بستن", null).show();
+                    AlertDialog missing = new AlertDialog.Builder(this).setMessage("مرورگری برای باز کردن سایت پیدا نشد.").setPositiveButton("بستن", null).show();
                     styleDialog(missing);
                 }
             }).show();

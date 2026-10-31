@@ -1,6 +1,8 @@
-# BTC Tag Checker
+# btc4fun
 
 Java/native Android views, Persian RTL. **Test-only debug artifact**, not a wallet, not an authenticity verifier, and not a device-tested release. Application identity: `com.saebm.btcnfccustomer`; debug identity: `com.saebm.btcnfccustomer.debug`. Android 8/API 26 minimum; target/compile API 35.
+
+The native instructions use short Persian sentences, explain the tag/scan action and satoshi, confirmed/pending amounts and source freshness, and keep the data-sharing and no-authenticity warnings. Website colors, logo, Sahel fonts and safe-area layout are preserved.
 
 ## Behavior and privacy
 
@@ -40,7 +42,7 @@ python3 -m unittest discover -s tests -v
 
 After dependencies are cached, `--offline` works. Offline is **not** appropriate on a fresh GitHub runner. Runtime dependencies are Gson 2.11.0 and OkHttp 4.12.0; JUnit 4.13.2 and MockWebServer/TLS 4.12.0 are test-only. Pure core tests run on the host JVM; Android variant tests test core wiring, not a running activity. Python tests check manifest/source/CI/content contracts, not rendered UI.
 
-Output: `app/build/outputs/apk/debug/BTC-Tag-Checker-debug.apk` (debug-signed, test-only). Its display label is `BTC Tag Checker (Debug)`; the release label is exactly `BTC Tag Checker`. Package names and existing version code/name are unchanged; `app/build.gradle` is their single source. Verify:
+Output: `app/build/outputs/apk/debug/btc4fun-debug.apk` (debug-signed, test-only). Its display label is `btc4fun (Debug)`; the release label is exactly `btc4fun`. Package names and repository `btc-tag-checker` are unchanged. Version code is 3 and version name is `0.1.2` (`0.1.2-test-only` for debug); `app/build.gradle` is their single source. Verify:
 
 ```sh
 python3 tools/verify_apk.py debug
@@ -71,7 +73,7 @@ Manual `signed_release=true` runs a dependent release job **only on main after t
 
 The user must set the existing values themselves at https://github.com/btc4-fun/btc-tag-checker/settings/secrets/actions . Stored GitHub secret values cannot be read or copied by API. Never send passwords or key contents in chat. No local release key has been searched for, read, copied or generated during this extraction.
 
-Secrets are available only in the signing step, never job-wide or to pull requests. That step writes the supplied keystore exclusively in the runner temporary directory with mode 0600 and removes it with exit/signal traps. A separate `always()` cleanup is the fallback; abrupt machine termination ultimately relies on ephemeral hosted runner destruction. Missing/invalid values fail closed. Signed output is `app/build/outputs/apk/release/BTC-Tag-Checker-release.apk`. Gradle caching is disabled for the release job, and the signing invocation uses a single-use daemon.
+Secrets are available only in the signing step, never job-wide or to pull requests. That step writes the supplied keystore exclusively in the runner temporary directory with mode 0600 and removes it with exit/signal traps. A separate `always()` cleanup is the fallback; abrupt machine termination ultimately relies on ephemeral hosted runner destruction. Missing/invalid values fail closed. Signed output is `app/build/outputs/apk/release/btc4fun-release.apk`. Gradle caching is disabled for the release job, and the signing invocation uses a single-use daemon.
 
 Release verification also requires the certificate SHA-256 below, independently established from the public SMS app release, not inferred from secret names:
 
@@ -79,7 +81,7 @@ Release verification also requires the certificate SHA-256 below, independently 
 
 Reference: https://github.com/sae13/android-sms-to-ntfy/releases/download/android-native-5ce03990e38533b545e665dbc6ffa74029effca6/sms-ntfy-android-native-arm64-v8a.apk
 
-Until a signed customer artifact passes that comparison, reuse of the user's key remains **unverified**. Existing installed customer versions/signers were not inspected; version code 1 is preserved, not claimed to be an upgrade. Never uninstall to bypass a certificate mismatch without the user's explicit data-loss approval.
+Until a signed customer artifact passes that comparison, reuse of the user's key remains **unverified**. Existing installed customer versions/signers were not inspected; version code advances to 3, but signer-compatible upgrades have not been tested. Never uninstall to bypass a certificate mismatch without the user's explicit data-loss approval.
 
 ### Local release gate
 
@@ -89,4 +91,4 @@ For an authorized local release, use a secret manager to supply `ANDROID_RELEASE
 
 Unit tests include leading-zero UID vectors, exact integer parsing, bounded bodies, JSON errors, fixed-origin/cursor validation, status handling, local TLS slow-drip timeout, cancellation, generation fencing and the no-503-retry case. Synthetic fixtures live exclusively in test sources; none is a live screen fallback. Real sockets are loopback test servers only; no customer wallet was queried.
 
-No emulator/physical device install or NFC hardware scan was performed. Remaining device acceptance: RTL rendering/font scaling/insets, NFC toggled off/on, rapid scans, consent cancellation, rotation/background cancellation, manual pagination and screen-reader behavior. Backend is intentionally gated off until the parent enables/deploys it. Do not claim end-to-end service operation from these local tests. Java compilation emits a compatibility deprecation note for the older platform inset API; strict Android lint passes.
+Prior emulator-only design checks are recorded in `DESIGN-VERIFICATION.md`; current rename/copy checks are recorded in `VERIFICATION.md`. No physical-device NFC scan was performed. Remaining physical-device acceptance: RTL rendering/font scaling/insets, NFC toggled off/on, rapid scans, consent cancellation, rotation/background cancellation, manual pagination and screen-reader behavior. Backend is intentionally gated off until the parent enables/deploys it. Do not claim end-to-end service operation from these local tests. Java compilation emits a compatibility deprecation note for the older platform inset API; strict Android lint passes.

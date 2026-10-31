@@ -1,4 +1,4 @@
-name: BTC Tag Checker — Android
+name: btc4fun — Android
 
 on:
   push:
@@ -51,16 +51,16 @@ jobs:
         run: python3 tools/verify_apk.py debug
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: BTC-Tag-Checker-debug-${{ github.sha }}
+          name: btc4fun-debug-${{ github.sha }}
           path: |
-            app/build/outputs/apk/debug/BTC-Tag-Checker-debug.apk
+            app/build/outputs/apk/debug/btc4fun-debug.apk
             app/build/outputs/apk/debug/SHA256SUMS
           if-no-files-found: error
           retention-days: 14
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: BTC-Tag-Checker-reports-${{ github.sha }}
+          name: btc4fun-reports-${{ github.sha }}
           path: |
             build/reports/
             core/build/reports/
@@ -137,16 +137,16 @@ jobs:
         run: python3 tools/verify_apk.py release
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: BTC-Tag-Checker-release-${{ github.sha }}
+          name: btc4fun-release-${{ github.sha }}
           path: |
-            app/build/outputs/apk/release/BTC-Tag-Checker-release.apk
+            app/build/outputs/apk/release/btc4fun-release.apk
             app/build/outputs/apk/release/SHA256SUMS
           if-no-files-found: error
           retention-days: 14
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: BTC-Tag-Checker-release-reports-${{ github.sha }}
+          name: btc4fun-release-reports-${{ github.sha }}
           path: |
             core/build/reports/
             core/build/test-results/

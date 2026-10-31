@@ -1,56 +1,53 @@
-# BTC Tag Checker — local verification
+# btc4fun — local verification
 
-This records the independent-project preparation, not a hosted CI run or device test.
+## Current artifact
 
-## Final artifact
+- Path: `app/build/outputs/apk/debug/btc4fun-debug.apk`
+- Size: 1,592,920 bytes.
+- SHA-256: `5bab13764c5233e2ffabdd9c618ff76f1e11f9138d91e0279b2a0b72decffc23`
+- Package: `com.saebm.btcnfccustomer.debug`; versionCode 3; versionName `0.1.2-test-only`; minimum API 26; target API 35.
+- Display label: `btc4fun (Debug)`. Release configuration uses exact lowercase `btc4fun`, package `com.saebm.btcnfccustomer`, version `0.1.2`, output `btc4fun-release.apk`.
+- Repository remains `btc-tag-checker`. Signing configuration, package IDs, site palette/logo, Sahel font bytes and system-bar/cutout handling are preserved.
+- ZIP integrity, Gradle metadata, display label, public snapshot bytes and APK Signature Scheme v2 passed the actual artifact verifier.
+- Android Debug signer certificate SHA-256: `348ff59439b64016ce70fdb166a84bb2343c4147f135f90d624885682517fd43`.
+- Permissions remain only INTERNET and NFC. This is not a user-key-signed release.
 
-- Path: `app/build/outputs/apk/debug/BTC-Tag-Checker-debug.apk`
-- Size: 1491362 bytes.
-- SHA-256: `ba74b5b8c91ac2958e53ee2606ad43a000897f5774b2c46ba22e7d8a43ace28d`
-- Verified package: `com.saebm.btcnfccustomer.debug`; versionCode 1; versionName `0.1.0-test-only`; minimum API 26; target API 35.
-- Verified label: `BTC Tag Checker (Debug)`.
-- ZIP integrity and every bundled public-content byte verified against the current checkout.
-- APK Signature Scheme v2 verified; one Android Debug signer. Certificate SHA-256: `348ff59439b64016ce70fdb166a84bb2343c4147f135f90d624885682517fd43`.
-- Only INTERNET and NFC permissions. This is not a user-key-signed release.
+## Executed gates on final source and snapshot
 
-## Executed local gates
+Toolchain: checked-in Gradle 8.9 wrapper, JDK 17, AGP 8.7.0, platform 35, build tools 36.0.0. Local JDK: `/usr/lib/jvm/java-17-amazon-corretto`; SDK: `/home/saeb/.local/share/android-sdk-refinery-pulse`. No machine paths were added to build configuration.
 
-- Gradle 8.9 wrapper, JDK 17, AGP 8.7.0, Android platform 35, build tools 36.0.0.
-- `python3 -m unittest discover -s tests -v`: 10 tests passed (six original contracts adapted/preserved, four additional independence, artifact, explicit-refresh and signing-step checks).
-- `./gradlew :core:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --no-daemon --rerun-tasks --console=plain`: BUILD SUCCESSFUL; 51 actionable tasks executed.
-- Fresh JUnit XML aggregate: 20 tests, zero failures/errors/skips (19 core, one Android variant core-wiring test).
-- Strict Android lint XML: zero issues. Java compiler reports a pre-existing deprecated Android API usage; it is not a lint failure.
-- Actual `:app:assembleRelease` invocation with all signing variables absent: BUILD FAILED at the explicit signing guard; no release APK created.
-- Actual workflow signing shell executed for each of the four absent-secret cases using synthetic values for the others: failed closed and left no temporary keystore. No real release key was read or generated.
-- Workflow YAML parsed; all embedded shell scripts passed `bash -n`; no job-level secret environment. Contract tests check immutable action pins, triggers, main-only release dependency, secret scope, cleanup and certificate gate.
-- Python independence check copies tools and bundled content into an unrelated temporary directory, verifies successfully without a parent checkout, then confirms tampered content is rejected. Ordinary checks use Python stdlib only. Optional refresh uses Jinja2 3.1.6.
-- Actual artifact verifier passed ZIP, Gradle metadata/identity, display label, bundled content and Android signature checks. A deliberately wrong identity or certificate is rejected by regression tests.
-- No separate proxy/no-proxy network claim: final Gradle execution used the normal environment and existing dependency cache, without forcing offline mode.
+```sh
+python3 -m unittest discover -s tests -v
+./gradlew :core:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleDebugAndroidTest --offline --no-daemon --rerun-tasks --console=plain
+python3 tools/verify_apk.py debug
+```
 
-## Transfer and content provenance
+- Python: 16 tests passed. Rename/version/workflow/verifier contracts were observed failing before implementation. Two new customer-copy contracts failed against the original text, then passed after the rewrite. Logs retain RED evidence.
+- Final Gradle run: BUILD SUCCESSFUL, all 75 actionable tasks executed. Fresh JUnit XML: 20 tests, zero failures/errors/skips (19 core, one Android variant wiring test).
+- Android lint: zero issues. Java retains the pre-existing deprecated inset API compile note.
+- Workflow tests preserve push-to-main, PR and manual triggers; immutable action pins; read-only permissions; opt-in main-only release dependent on debug gates; step-scoped secrets; cleanup; and stable certificate verification. Four missing-secret shell cases fail closed.
+- Actual `:app:assembleRelease` with all signing variables removed failed at the explicit signing guard. No replacement key was created or signing material read. Release build/lint/tests cannot run without the stable signing prerequisites; this guard was not bypassed.
+- APK verifier ran again after the parent's final public snapshot refresh, not against an earlier build.
 
-39 explicitly allowlisted source/build-wrapper/test/documentation files were copied non-destructively. Every initial destination SHA-256 matched its source. Build directories, Gradle state, bootstrap wrapper duplicates, caches, local properties, logs and signing files were excluded. Original app/backend/seller and the old workflow were not modified or deleted.
+## Public content provenance
 
-Local ignored evidence is under `.verification/`: `transfer-parity.json`, RED/GREEN logs, `gradle-debug.log`, `release-refused.log`, `apk-verification.log`, and `final-summary.json`. The initial hash inventory is retained even for files intentionally adapted afterward. Source files were rechecked against it and remained unchanged by this work.
+Parent refreshed `app/src/main/assets/public` at `2026-10-31T18:43:59+00:00`. Source digest:
 
-The public snapshot was intentionally refreshed from the explicit read-only parent template allowlist after detecting existing base/terms changes. Snapshot UTC: `2026-10-31T17:27:33+00:00`. Source digest: `4ba8adad364868eff4461c6ac4f6726915f7d979cfc7cb50f041564ea9a2f3f2`. Full security guidance and current public payment disclaimer are included; no prices, scripts, images, backend configuration or real wallet data were copied. Further upstream edits do not silently change this bundle.
+`46f0083fb527f8ce055ea5c772d2520a31426bd351f85c61414a33d6d5c5b216`
 
-Wrapper JAR SHA-256 is `498495120a03b9a6ab5d155f5de3c8f0d986a449153702fb80fc80e134484f17`; distribution checksum remains pinned in wrapper properties. The wrapper bytes were preserved from the previously verified source.
+Every packaged public file exactly matches this checked-in snapshot. The native-copy work did not edit `tools/sync_public_content.py` or regenerate the public assets; parent owns those files. This independent repository is the authoritative Android project. Ordinary build/tests require no former parent checkout.
 
-Action commits resolved through GitHub's commit API during preparation:
+## Emulator evidence
 
-| Action | Reference resolved | Immutable commit |
-| --- | --- | --- |
-| actions/checkout | v4 | `11d5960a326750d5838078e36cf38b85af677262` |
-| actions/setup-java | v4 | `cf277c60eb25467037889841efdb72551f06f6c3` |
-| android-actions/setup-android | v3 | `9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407` |
-| gradle/actions/setup-gradle | v4 (gradle/actions repository) | `ed408507eac070d1f99cc633dbcf757c94c7933a` |
-| actions/upload-artifact | v4 | `ea165f8d65b6e75b540449e92b4886f43607fa02` |
+- Existing disposable API 35 x86_64 AVD was used, not a personal device.
+- Final application and instrumentation APKs were installed. Both were pulled back and SHA-256 matched to the final local artifacts; evidence: `.verification/btc4fun/installed-artifacts.json`.
+- 156 native-view assertions passed at normal and 1.3 font scale: Sahel, safe margins, centered reading width, offline payment paragraph direction, disabled pre-scan requests, consent title/button and cancellation without a network client.
+- Fresh portrait and large-font consent screenshots were visually inspected. Persian text and permission disclosures fit; buttons and content clear system bars. The initial emulator System UI non-response overlay was dismissed and captures repeated; obstructed captures are not acceptance evidence.
+- Screenshots and logs: ignored `.verification/btc4fun/`, including `portrait-1.0.png`, `consent-1.3.png`, `ui-1.0.log`, `ui-1.3.log`, `python-tests.log`, `gradle.log`, `apk.log`, `identity-red.log`, `copy-red.log`, `release-refused.log`.
+- Historical landscape/cutout design tests belong to code 2 and remain explicitly historical in `DESIGN-VERIFICATION.md`; they were not rerun for this copy revision.
 
 ## Remaining boundaries
 
-Local Git was initialized on `main`; this preparation did not commit or push. Hosted runs, remote SHA equality and downloading/verifying an APK from that exact run belong to the publication gate, not this local report. The user must supply the four existing signing secrets; workflow authorization and secret setup are external prerequisites.
+No commit, push, hosted workflow run or publication was performed by this workstream. Parent owns publication. No physical NFC scan, live customer-wallet request, deployed-backend inquiry, physical-device accessibility review or signer-compatible production upgrade was tested. Emulator/source/unit checks do not establish these gates. Signed release remains blocked on the existing user key; no unsigned/debug-key fallback is allowed.
 
-The release workflow compares its APK signer against the public SMS release certificate documented in README. No customer release has yet passed that comparison; user-key reuse remains unverified. No installed app/version/signature was inspected, and no upgrade compatibility or version increment is claimed.
-
-No emulator, physical device installation, NFC scan, rendered RTL/UI, wireless connection or deployed backend end-to-end test was performed. Host JVM/source contracts are not Android instrumentation. No live customer wallet was queried. Backend availability is not established by these tests.
+Initial SDK discovery selected an SDK containing build tools 34 rather than 36; switching to the already-installed documented SDK resolved the build without downloads or project changes. Final build was offline with cached dependencies, not evidence of direct/proxy network availability.
