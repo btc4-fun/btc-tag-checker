@@ -9,6 +9,14 @@ import sys
 import tempfile
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 class SnapshotTests(unittest.TestCase):
+ def test_contact_destinations_and_tamper_check(self):
+  target=ROOT/'app/src/main/assets/public'
+  self.assertTrue((target/'contact-links.json').is_file(), 'Contact destinations missing')
+  links=json.loads((target/'contact-links.json').read_text())
+  self.assertEqual(set(links.values()), {'https://btc4.fun/', 'https://btc4.fun/contact', 'mailto:09113458375@btc4.fun', 'https://t.me/btc4_fun', 'https://www.instagram.com/btc4.fun/', 'https://x.com/btc4_fun'})
+  manifest=json.loads((target/'manifest.json').read_text())
+  self.assertEqual(hashlib.sha256((target/'contact-links.json').read_bytes()).hexdigest(),manifest['contact_links_sha256'])
+  self.assertIn('contact.html',manifest['sources'])
  def test_refresh_requires_explicit_source_root(self):
   text=(ROOT/'tools/sync_public_content.py').read_text()
   self.assertIn("'--source-root'",text)

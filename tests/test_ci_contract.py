@@ -7,6 +7,11 @@ import tempfile
 import textwrap
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 class CiContract(unittest.TestCase):
+ def test_market_lifecycle_instrumentation_is_executed(self):
+  text=(ROOT/'.github/workflows/android.yml').read_text()
+  self.assertIn('python3 tools/run_device_checks.py --serial emulator-5554',text)
+  self.assertIn(':app:assembleDebugAndroidTest',text)
+  self.assertIn('jinja2==3.1.6',text)
  def test_signing_step_rejects_each_missing_secret_and_cleans_up(self):
   text=(ROOT/'.github/workflows/android.yml').read_text()
   block=text.split('      - name: Sign with the existing user key\n',1)[1]
@@ -103,5 +108,5 @@ class CiContract(unittest.TestCase):
   self.assertIn("resValue 'string', 'app_name', 'btc4fun (Debug)'",text)
   self.assertIn('btc4fun-${variant.buildType.name}.apk',text)
   self.assertIn('ANDROID_RELEASE_STORE_PASSWORD',text)
-  self.assertIn("versionCode 4; versionName '1.0.0'",text)
+  self.assertIn("versionCode 6; versionName '1.1.0'",text)
 if __name__=='__main__':unittest.main()

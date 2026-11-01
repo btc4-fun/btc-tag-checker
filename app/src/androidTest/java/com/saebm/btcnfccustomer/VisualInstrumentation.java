@@ -63,6 +63,60 @@ public final class VisualInstrumentation extends Instrumentation {
             check(!t.isSaveEnabled(),"text must not persist into saved state");
         }
     }
+    private void setField(String name,Object value) throws Exception {
+        Field f=MainActivity.class.getDeclaredField(name);f.setAccessible(true);f.set(activity,value);
+    }
+    private void toolsChecks() throws Exception {
+        invoke("showContact",new Class<?>[]{});verifyFonts(tagged("site-content"));
+        check(field("marketClient")==null,"contact must not fetch");
+        invoke("openContact",new Class<?>[]{String.class},"https://btc4.fun/contact");
+        AlertDialog dialog=(AlertDialog)field("consent");check(dialog!=null&&dialog.isShowing(),"contact explicit confirmation");
+        dialog.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();
+        invoke("showCosts",new Class<?>[]{});
+        check(field("marketClient")==null,"opening costs must not fetch");
+        check(!((Button)field("calculate")).isEnabled(),"no quote without rates");
+        String json;
+        try(java.io.InputStream in=getContext().getAssets().open("market.json")) {
+            json=com.saebm.btcnfccustomer.core.RequestPolicy.read(in,262144,System.nanoTime()+2_000_000_000L);
+        }
+        long wall=java.time.OffsetDateTime.parse("2026-11-01T00:00:00+00:00").toInstant().toEpochMilli();
+        long mono=android.os.SystemClock.elapsedRealtime();
+        com.saebm.btcnfccustomer.core.MarketResponse data=com.saebm.btcnfccustomer.core.MarketResponse.parse(json,wall,mono);
+        setField("market",data);invoke("renderMarket",new Class<?>[]{});
+        for(String speed:new String[]{"economy","medium","fast"}) for(boolean tag:new boolean[]{false,true}) {
+            setField("speed",speed);setField("includeTag",tag);invoke("renderMarket",new Class<?>[]{});
+            check(((Button)tagged("speed-"+speed)).getText().toString().contains("انتخاب‌شده"),"speed has visible selected label");
+            check(((Button)tagged("tag-choice")).getText().toString().contains(tag?"با برچسب":"بدون برچسب"),"tag control exposes state");
+            for(boolean budget:new boolean[]{false,true}) {
+                setField("budgetMode",budget);
+                ((android.widget.EditText)field("amount")).setText(budget?"500000":"3000");
+                invoke("calculateQuote",new Class<?>[]{});
+                String expected=data.option(speed,tag).calculator.calculate(budget?"500000":"3000",budget).get("total_toman").getAsString();
+                boolean found=false;
+                for(View v:views((View)field("customResult"))) if(v instanceof TextView && ((TextView)v).getText().toString().equals(expected)) found=true;
+                check(found,"exact quote shown for each option/mode");
+            }
+            check(field("marketClient")==null,"local changes must not fetch");
+        }
+        verifyFonts(tagged("site-content"));
+        com.saebm.btcnfccustomer.core.Latest gate=(com.saebm.btcnfccustomer.core.Latest)field("marketGate");long token=gate.begin();
+        invoke("showContact",new Class<?>[]{});check(!gate.accepts(token),"leaving rejects late market response");
+        invoke("showCosts",new Class<?>[]{});
+        java.util.concurrent.atomic.AtomicLong clock=new java.util.concurrent.atomic.AtomicLong(1000);
+        setField("marketClock",(java.util.function.LongSupplier)clock::get);
+        setField("market",com.saebm.btcnfccustomer.core.MarketResponse.parse(json,wall+299000,1000));
+        invoke("renderMarket",new Class<?>[]{});
+        check(((Button)field("calculate")).isEnabled(),"pre-expiry calculator enabled");
+        ((android.widget.EditText)field("amount")).setText("3000");
+        invoke("calculateQuote",new Class<?>[]{});
+        check(((ViewGroup)field("customResult")).getChildCount()>1,"pre-expiry result populated");
+        clock.set(2000);
+        invoke("updateMarketAge",new Class<?>[]{});check(!((Button)field("calculate")).isEnabled(),"expired rate blocks calculation");
+        check(((ViewGroup)field("customResult")).getChildCount()==1,"expiry removes result");
+        check(((ViewGroup)field("marketTable")).getChildCount()==0,"expiry removes table");
+        setField("marketClock",(java.util.function.LongSupplier)android.os.SystemClock::elapsedRealtime);
+        invoke("showInquiry",new Class<?>[]{});
+    }
     @Override public void onStart() {
         Bundle report=new Bundle();
         try {
@@ -72,6 +126,8 @@ public final class VisualInstrumentation extends Instrumentation {
                 java.util.concurrent.atomic.AtomicReference<Throwable> captureFailure = new java.util.concurrent.atomic.AtomicReference<>();
                 runOnMainSync(() -> {
                     try {
+                        if (capture.equals("contact")) invoke("showContact",new Class<?>[]{});
+                        if (capture.equals("costs")) invoke("showCosts",new Class<?>[]{});
                         if (capture.equals("payment")) invoke("showPublic", new Class<?>[]{String.class,String.class}, "payment", "اطلاعات پرداخت");
                         if (capture.equals("consent")) {
                             Field uid=MainActivity.class.getDeclaredField("uid"); uid.setAccessible(true); uid.set(activity,"00000001");
@@ -129,10 +185,12 @@ public final class VisualInstrumentation extends Instrumentation {
                     check(dialog.getButton(AlertDialog.BUTTON_POSITIVE).getText().toString().equals("فقط همین بار ارسال کن"),"consent is for one request only");
                     dialog.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();
                     check(field("client")==null,"cancel consent must not create network client");
+                    toolsChecks();
                     invoke("showInquiry",new Class<?>[]{});
                 } catch(Throwable e) { failure.set(e); }
             });
             if (failure.get()!=null) throw failure.get();
+            new MarketInteractionChecks(this, activity).run();
             report.putString("stream","PASS: "+assertions+" UI assertions; layout, Sahel, offline paragraphs, consent/no-network\n");
             finish(Activity.RESULT_OK,report);
         } catch(Throwable e) {

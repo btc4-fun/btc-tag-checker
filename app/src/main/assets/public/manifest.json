@@ -1,10 +1,11 @@
 {
   "version": 1,
-  "fetched_at": "2026-10-31T18:43:59+00:00",
-  "source_sha256": "46f0083fb527f8ce055ea5c772d2520a31426bd351f85c61414a33d6d5c5b216",
+  "fetched_at": "2026-11-01T16:56:05+00:00",
+  "source_sha256": "83a4a4e282096e354baf6972ae6515cb6fe62ad76498fc50aecedaf05355d58d",
   "security_source": "security.html",
   "sources": {
     "base.html": "2d5f046f58e1c09c02856c7cba67576b30c804c6625bac23485f168888291cab",
+    "contact.html": "5f08f86c85356b252763f76739dc115c2ad12450000b0d72f5724a46a06c5692",
     "guide.html": "fb9946a9e4f0c4f096c7c9862143a3da16a14213de9189b12d6e61472ffbbab6",
     "terms.html": "94d871fe0d9b9eac01d0c0c4f596240af323b484b5fe41e39fbbec69227e5f3c",
     "security.html": "296ad2544e97b3683d1ff7e673e53e6f5661f6074b9842383ebba3425bb54368",
@@ -13,12 +14,13 @@
     "_payment_details.html": "73759baafd8f3e8ab8491ddcf1404db3605b84f875071fb6af0c8dd56bde5da5"
   },
   "pages": {
-    "guide": "410e02b06c63f026f7967587a827d352b6d2233363bede9a903d39248c3f5352",
-    "terms": "e3349cbb6c7b5f95b6f5cb6e48d30b592867557bdcee66402201241fac90d2e2",
-    "payment": "fe70d97dd6b67cd2c295e3e827fffcf0fd297cb91966e43ab778cdb3e4b7528a",
-    "security": "4a4df45af78f3c1817b732fe090ca3fff505b015d7e2c27da45dce8085129aa7",
-    "costs": "71bd1d68d0980cce70c60038ba4ed184ef3cac2a2dd00332aabe562fa1379cbe"
+    "guide": "dfea25a188384769e9ee86d03162fc2a617c7aea01c209fc319654cf5751b56d",
+    "terms": "40432e3d635977f9d1d8d0709bdc415e0ef5347a5b66e582392f30ab7989bda7",
+    "payment": "b355c9c137fa5c161a6d659320bcd5ad2f65d99861ff44aefde2f009277cda08",
+    "security": "a1d8fb5208da449e4149025f631f87027e1ae0e8a1831c7a21cbc04e658e0f49",
+    "costs": "4fe043fed36e6a85e42c87fcacc97e0d7224457643bb9c90a720c042a9729f2e"
   },
   "images_bundled": false,
-  "prices_bundled": false
+  "prices_bundled": false,
+  "contact_links_sha256": "a30d3a5b1f35b5fd166c4cea3d74c2ea2c4846a330b019b2e4121b97f54ff82e"
 }

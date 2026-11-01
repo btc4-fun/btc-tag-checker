@@ -19,6 +19,11 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import com.saebm.btcnfccustomer.core.Client;
+import com.saebm.btcnfccustomer.core.MarketClient;
+import com.saebm.btcnfccustomer.core.MarketResponse;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import android.widget.EditText;
 import com.saebm.btcnfccustomer.core.Latest;
 import com.saebm.btcnfccustomer.core.RequestPolicy;
 import com.saebm.btcnfccustomer.core.Response;
@@ -50,6 +55,19 @@ public final class MainActivity extends Activity {
     private long retryUntil, scanGeneration;
     private Runnable countdown;
     private AlertDialog consent;
+    private final Latest marketGate = new Latest();
+    private MarketClient marketClient;
+    private MarketResponse market;
+    private boolean costsPage, includeTag, budgetMode;
+    private String speed = "economy";
+    private LinearLayout marketTable, customResult;
+    private TextView marketStatus;
+    private EditText amount;
+    private Button marketFetch, calculate;
+    private Runnable ageTick;
+    private java.util.function.LongSupplier marketClock = SystemClock::elapsedRealtime;
+    private java.util.function.Supplier<MarketClient> marketFactory = () -> new MarketClient(marketClock);
+    private long marketRetryUntil;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -60,12 +78,14 @@ public final class MainActivity extends Activity {
         super.onResume(); active = true;
         if (inquiry && status != null && uid == null) status.setText(nfc == null ? "این گوشی نمی‌تواند برچسب را بخواند. راهنماها را می‌توانید بدون اینترنت بخوانید." : !nfc.isEnabled() ? "خواندن برچسب خاموش است. در تنظیمات گوشی، گزینهٔ ارتباط نزدیک را روشن کنید. نام این گزینه در راهنمای پایین آمده است." : "دکمهٔ خواندن برچسب را بزنید. چیزی خودکار ارسال نمی‌شود.");
         updateButtons();
+        if (costsPage) startMarketAge();
     }
     @Override public void onPause() {
         active = false;
         stopReading();
         if (consent != null) { consent.dismiss(); consent = null; }
         cancelRequest();
+        if (costsPage && market == null && marketStatus != null) marketStatus.setText("دریافت متوقف شد. برای تلاش دوباره دکمهٔ دریافت نرخ را بزنید.");
         if (inquiry && status != null) status.setText("با خروج از این صفحه، دریافت اطلاعات متوقف شد. برای اطلاعات تازه، دوباره دکمهٔ دیدن موجودی را بزنید.");
         super.onPause();
     }
@@ -81,6 +101,7 @@ public final class MainActivity extends Activity {
         return shape;
     }
     private void screen(String title) {
+        costsPage = false;
         // Own edge-to-edge consistently: safe bars/cutouts outside, generous reading padding inside.
         getWindow().getDecorView(); // Materialize decor before requesting its insets controller.
         if (android.os.Build.VERSION.SDK_INT >= 30) {
@@ -219,7 +240,8 @@ public final class MainActivity extends Activity {
         button(links, "شرایط و مسئولیت‌ها", () -> showPublic("terms", "شرایط و مسئولیت‌ها"), false);
         button(links, "اطلاعات پرداخت", () -> showPublic("payment", "اطلاعات پرداخت"), false);
         button(links, "امنیت و نگهداری", () -> showPublic("security", "امنیت و نگهداری"), false);
-        button(links, "قیمت و هزینه‌ها", () -> showPublic("costs", "قیمت و هزینه‌ها"), false);
+        button(links, "قیمت و هزینه‌ها", this::showCosts, false);
+        button(links, "ارتباط با ما", this::showContact, false);
         TextView footer = text(content, "برای یاد گرفتن و تجربه کردن؛ نه وعدهٔ ثروتمند شدن.", false);
         footer.setTextSize(12); footer.setTextColor(color(R.color.muted)); footer.setPadding(0, dp(32), 0, 0);
         updateButtons();
@@ -309,6 +331,10 @@ public final class MainActivity extends Activity {
     }
     private void cancelRequest() {
         gate.invalidate();
+        marketGate.invalidate();
+        if (marketClient != null) { marketClient.cancel(); marketClient = null; }
+        if (ageTick != null) { main.removeCallbacks(ageTick); ageTick = null; }
+        if (marketFetch != null) marketFetch.setEnabled(true);
         if (client != null) { client.cancel(); client = null; }
         if (work != null) { work.cancel(true); work = null; }
         if (countdown != null) { main.removeCallbacks(countdown); countdown = null; }
@@ -384,6 +410,176 @@ public final class MainActivity extends Activity {
         } catch (Exception ex) { text(content, "متن راهنما باز نشد. می‌توانید نسخهٔ تازهٔ آن را در سایت بخوانید.", false); }
         button("دیدن نسخهٔ تازه در سایت", () -> openPublic(page.equals("payment") ? "costs" : page));
         button("بازگشت به موجودی پاکت", this::showInquiry);
+    }
+    private void showContact() {
+        cancelRequest(); stopReading(); inquiry = false; uid = null; cursor = null;
+        screen("ارتباط با ما");
+        button("بازگشت به موجودی پاکت", this::showInquiry);
+        text(content, "فقط پرسش عمومی بفرستید. کلید خصوصی، کلمات بازیابی، عبارت عبور، فایل پشتیبان و عکس داخل پاکت را نفرستید. پاسخ فوری تضمین نمی‌شود.", false);
+        text(content, "فرم پیام در مرورگر باز می‌شود. برنامه پیام ارسال نمی‌کند و شمارهٔ برچسب یا اطلاعات کیف پول را به مقصد اضافه نمی‌کند.", false);
+        try (InputStream in = getAssets().open("public/contact-links.json")) {
+            JsonObject links = JsonParser.parseString(RequestPolicy.read(in, 8192, System.nanoTime()+2_000_000_000L)).getAsJsonObject();
+            String[] keys = {"email", "website", "form", "telegram", "instagram", "x"};
+            String[] labels = {"ایمیل", "سایت", "فرم پرسش عمومی در سایت", "تلگرام", "اینستاگرام", "ایکس، توییتر سابق"};
+            for (int i=0; i<keys.length; i++) {
+                String url = links.get(keys[i]).getAsString();
+                text(content, url, true);
+                button(labels[i], () -> openContact(url));
+            }
+        } catch (Exception ex) { text(content, "نشانی‌های ارتباط باز نشدند. لطفاً سایت را بررسی کنید.", false); }
+    }
+    private void openContact(String url) {
+        // Only bundled public destinations, never user or tag-derived URI components.
+        if (!url.matches("mailto:[A-Za-z0-9_.+-]+@btc4\\.fun|https://btc4\\.fun/(?:contact)?|https://t\\.me/[A-Za-z0-9_]+|https://www\\.instagram\\.com/[A-Za-z0-9_.]+/|https://x\\.com/[A-Za-z0-9_]+")) return;
+        consent = new AlertDialog.Builder(this).setTitle("باز کردن راه ارتباط")
+            .setMessage("برنامهٔ ایمیل یا مرورگر باز می‌شود. مقصد اطلاعات اتصال شما را می‌بیند. شمارهٔ برچسب و اطلاعات کیف پول ارسال نمی‌شوند. هیچ راز کیف پولی نفرستید.")
+            .setNegativeButton("لغو", (d,w) -> consent=null)
+            .setPositiveButton("باز کردن", (d,w) -> {
+                consent=null;
+                Intent intent=new Intent(url.startsWith("mailto:")?Intent.ACTION_SENDTO:Intent.ACTION_VIEW,Uri.parse(url));
+                if(!url.startsWith("mailto:")) intent.addCategory(Intent.CATEGORY_BROWSABLE);
+                try { startActivity(intent); }
+                catch(ActivityNotFoundException ex) { AlertDialog missing=new AlertDialog.Builder(this).setMessage("برنامه‌ای برای باز کردن این راه ارتباط پیدا نشد.").setPositiveButton("بستن",null).show();styleDialog(missing); }
+            }).show();
+        styleDialog(consent);
+    }
+    private void showCosts() {
+        cancelRequest(); stopReading(); inquiry=false; uid=null; cursor=null; market=null;
+        speed="economy"; includeTag=false; budgetMode=false;
+        screen("قیمت و هزینه‌ها"); costsPage=true;
+        button("بازگشت به موجودی پاکت",this::showInquiry);
+        text(content,"نرخ فقط با دکمهٔ زیر از سایت دریافت می‌شود. مبلغ و بودجه ارسال نمی‌شوند. تغییر سرعت و برچسب، درخواست تازه‌ای نمی‌فرستد. این برآورد سفارش یا تعهد پرداخت نیست.",false);
+        marketFetch=button("دریافت نرخ از سایت",this::fetchMarket);
+        marketStatus=text(content,"هنوز نرخی دریافت نشده است.",false);
+        marketStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+        LinearLayout choices=section("quote-options","انتخاب هزینه‌ها",false);
+        String[] speeds={"economy","medium","fast"}, labels={"اقتصادی","متوسط","سریع"};
+        for(int i=0;i<speeds.length;i++) {
+            final String selected=speeds[i];
+            Button b=button(choices,labels[i],()->{speed=selected;renderMarket();},false);b.setTag("speed-"+selected);
+        }
+        button(choices,"بدون برچسب؛ تغییر انتخاب",()->{includeTag=!includeTag;renderMarket();},false).setTag("tag-choice");
+        text(choices,"سرعت‌ها فقط اولویت پیشنهادی‌اند، نه تضمین زمان تأیید. چاپ پانزده سنت و برچسب دوازده سنت با فرض هر تتر برابر یک دلار برآورد می‌شوند. کارمزد گرداننده پانزده درصدِ اصل و هزینه‌هاست. نرخ صرافی نیم درصد تعدیل دارد.",false);
+        marketTable=section("market-table","جدول برآورد",false);
+        LinearLayout custom=section("custom-quote","محاسبهٔ مبلغ دلخواه",true);
+        text(custom,"عدد صحیح مثبت با ارقام انگلیسی، بدون فاصله، جداکننده، اعشار یا صفر ابتدایی؛ حداکثر سی‌ودو رقم. اصل مبلغ از پانصد ساتوشی تا سقف بیست‌ویک میلیون بیت‌کوین است.",false);
+        button(custom,"اصل ساتوشی؛ تغییر حالت",()->{budgetMode=!budgetMode;clearCustom();},false).setTag("budget-choice");
+        amount=new EditText(this); amount.setTag("quote-amount");amount.setSaveEnabled(false);
+        amount.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);amount.setTextDirection(View.TEXT_DIRECTION_LTR);
+        amount.setTypeface(getResources().getFont(R.font.sahel_regular));amount.setTextColor(color(R.color.ink));
+        amount.setContentDescription("مبلغ دلخواه؛ عدد صحیح با ارقام انگلیسی");custom.addView(amount,new LinearLayout.LayoutParams(-1,-2));
+        amount.addTextChangedListener(new android.text.TextWatcher(){
+            public void beforeTextChanged(CharSequence s,int start,int count,int after) {}
+            public void onTextChanged(CharSequence s,int start,int before,int count) {clearCustom();}
+            public void afterTextChanged(android.text.Editable s) {}
+        });
+        calculate=button(custom,"محاسبه با همین نرخ",this::calculateQuote,false);
+        customResult=new LinearLayout(this);customResult.setOrientation(LinearLayout.VERTICAL);custom.addView(customResult);
+        renderMarket();startMarketAge();
+        button("راهنمای هزینه‌ها",()->showPublic("costs","راهنمای هزینه‌ها"));
+    }
+    private void clearCustom() {
+        Button mode=content.findViewWithTag("budget-choice");
+        if(mode!=null) mode.setText(budgetMode?"بودجهٔ تومان؛ تغییر به اصل ساتوشی":"اصل ساتوشی؛ تغییر به بودجهٔ تومان");
+        if(customResult==null) return;
+        customResult.removeAllViews();
+        text(customResult,budgetMode?"حالت انتخاب‌شده: بودجه به تومان":"حالت انتخاب‌شده: اصل مبلغ به ساتوشی",false);
+    }
+    private void fetchMarket() {
+        if(!active || !costsPage || marketClock.getAsLong()<marketRetryUntil) return;
+        cancelRequest();market=null;renderMarket();marketFetch.setEnabled(false);
+        marketStatus.setText("در حال دریافت نرخ؛ چیزی از برچسب یا مبلغ شما ارسال نمی‌شود…");
+        final long generation=marketGate.begin();
+        final MarketClient transport=marketFactory.get();marketClient=transport;
+        WeakReference<MainActivity> owner=new WeakReference<>(this);
+        work=worker.submit(()->{
+            MarketResponse response=null;
+            int delay=0;
+            try {response=transport.fetch();}
+            catch(Client.Failure failure) {if(failure.status==429) delay=failure.retrySeconds;}
+            catch(Exception ignored) { /* Public error only. */ }
+            final int retry=delay;
+            final MarketResponse delivered=response;
+            new Handler(Looper.getMainLooper()).post(()->{
+                MainActivity activity=owner.get();
+                if(activity==null||!activity.active||!activity.costsPage||!activity.marketGate.accepts(generation)) return;
+                activity.marketClient=null;activity.work=null;activity.marketFetch.setEnabled(true);activity.market=delivered;
+                if(retry>0) activity.marketRetryUntil=activity.marketClock.getAsLong()+retry*1000L;
+                activity.renderMarket();
+                if(delivered==null) activity.marketStatus.setText("نرخ معتبر دریافت نشد؛ اینترنت، پاسخ نامعتبر یا قدیمی می‌تواند علت باشد. هیچ قیمت صفر یا جایگزینی فرض نشده است. برای تلاش دوباره دکمهٔ دریافت نرخ را بزنید.");
+                activity.startMarketAge();
+            });
+        });
+    }
+    private void startMarketAge() {
+        if(ageTick!=null) main.removeCallbacks(ageTick);
+        ageTick=new Runnable(){public void run(){
+            if(!active||!costsPage) return;
+            updateMarketAge();main.postDelayed(this,1000);
+        }};ageTick.run();
+    }
+    private void updateMarketAge() {
+        long now=marketClock.getAsLong();
+        if(now<marketRetryUntil) {
+            marketFetch.setEnabled(false);
+            marketStatus.setText("درخواست‌ها زیاد شده است؛ تا پایان زمان پیشنهادی سایت صبر کنید. ثانیهٔ باقی‌مانده:\n\n"+((marketRetryUntil-now+999)/1000)+"\n\nبرنامه خودکار تلاش نمی‌کند.");
+        } else if(marketClient==null) {
+            marketFetch.setEnabled(true);
+            if(marketRetryUntil!=0) {marketRetryUntil=0;marketStatus.setText("زمان پیشنهادی تمام شد؛ برای تلاش دوباره دکمهٔ دریافت نرخ را بزنید. موفقیت تضمین نمی‌شود.");}
+        }
+        if(market==null) return;
+        if(!market.usable(now)) {
+            calculate.setEnabled(false);marketTable.removeAllViews();clearCustom();
+            marketStatus.setText("نرخ بیش از پنج دقیقه عمر دارد؛ محاسبه متوقف شد. دوباره دکمهٔ دریافت نرخ را بزنید.");
+        } else marketStatus.setText(market.fresh(now)?"برآورد با دادهٔ دریافت‌شده؛ نرخ نهایی تضمین نمی‌شود.":"نرخ قدیمی است؛ این برآورد قیمت تازه نیست. پیش از پرداخت نرخ را دوباره دریافت کنید.");
+    }
+    private void renderMarket() {
+        if(!costsPage) return;
+        marketTable.removeAllViews();clearCustom();
+        boolean usable=market!=null&&market.usable(marketClock.getAsLong());
+        for(String s:new String[]{"economy","medium","fast"}) {
+            View b=content.findViewWithTag("speed-"+s);b.setEnabled(usable&&market.option(s,false)!=null);
+            ((Button)b).setSelected(s.equals(speed));
+            String label=s.equals("economy")?"اقتصادی":s.equals("medium")?"متوسط":"سریع";
+            ((Button)b).setText(label+(s.equals(speed)?"؛ انتخاب‌شده":"؛ انتخاب"));
+            b.setBackground(surface(s.equals(speed)?R.color.surface:R.color.paper,s.equals(speed)?R.color.accent:R.color.line));
+        }
+        ((Button)content.findViewWithTag("tag-choice")).setText(includeTag?"با برچسب؛ تغییر به بدون برچسب":"بدون برچسب؛ تغییر به با برچسب");
+        MarketResponse.Option option=usable?market.option(speed,includeTag):null;
+        calculate.setEnabled(option!=null);
+        text(marketTable,"انتخاب سرعت: "+(speed.equals("economy")?"اقتصادی":speed.equals("medium")?"متوسط":"سریع")+(includeTag?"؛ با برچسب":"؛ بدون برچسب"),false);
+        if(option==null) {text(marketTable,"نرخ معتبر برای این انتخاب در دسترس نیست.",false);updateMarketAge();return;}
+        text(marketTable,"زمان دریافت در سایت",false);text(marketTable,market.fetchedAt,true);
+        text(marketTable,"منبع قیمت و کارمزد، به گفتهٔ سایت",false);text(marketTable,MarketResponse.PRICES,true);text(marketTable,MarketResponse.FEES,true);
+        text(marketTable,"نرخ تعدیل‌شدهٔ بیت‌کوین؛ تومان",false);text(marketTable,option.btcToman,true);
+        text(marketTable,"نرخ تعدیل‌شدهٔ تتر؛ تومان",false);text(marketTable,option.usdtToman,true);
+        text(marketTable,"هزینهٔ شبکه برای هر بایت مجازی؛ ساتوشی — اندازهٔ فرضی تراکنش صد‌وچهل‌ویک بایت مجازی است.",false);text(marketTable,option.feeRate,true);
+        for(com.google.gson.JsonElement element:option.rows()) {
+            JsonObject row=element.getAsJsonObject();
+            text(marketTable,"اصل مبلغ؛ ساتوشی",false);text(marketTable,row.get("principal_sats").getAsString(),true);
+            text(marketTable,"جمع پرداختی؛ تومان",false);text(marketTable,row.get("total_toman").getAsString(),true);
+            LinearLayout details=new LinearLayout(this);details.setOrientation(LinearLayout.VERTICAL);details.setVisibility(View.GONE);
+            String rowLabel="ریز هزینهٔ اصل ساتوشی:\n"+row.get("principal_sats").getAsString();
+            Button disclosure=button(marketTable,"نمایش "+rowLabel,()->{},false);
+            disclosure.setOnClickListener(v->{boolean open=details.getVisibility()==View.GONE;details.setVisibility(open?View.VISIBLE:View.GONE);disclosure.setText((open?"بستن ":"نمایش ")+rowLabel);});
+            marketTable.addView(details);renderQuote(details,row);
+        }
+        updateMarketAge();
+    }
+    private void calculateQuote() {
+        clearCustom();updateMarketAge();
+        if(market==null||!market.usable(marketClock.getAsLong())) return;
+        MarketResponse.Option option=market.option(speed,includeTag);if(option==null) return;
+        try {
+            JsonObject row=option.calculator.calculate(amount.getText().toString(),budgetMode);
+            text(customResult,"برآورد با همان نرخ جدول؛ ورودی ارسال نشد. نرخ نهایی تضمین نمی‌شود. زمان دریافت:",false);
+            text(customResult,market.fetchedAt,true);renderQuote(customResult,row);
+        } catch(IllegalArgumentException invalid) {text(customResult,"مقدار معتبر نیست یا بودجه برای حداقل بسته کافی نیست. محدودیت ارقام و اصل مبلغ را بررسی کنید.",false);}
+    }
+    private void renderQuote(LinearLayout parent,JsonObject row) {
+        String[] fields={"principal_sats","btc","network_sats","print_sats","tag_sats","operator_sats","total_sats","total_toman","total_rial","budget_toman","remainder_toman"};
+        String[] labels={"اصل؛ ساتوشی","معادل بیت‌کوین","شبکه؛ ساتوشی","چاپ؛ ساتوشی","برچسب؛ ساتوشی","گرداننده؛ ساتوشی","جمع؛ ساتوشی","جمع پرداختی؛ تومان","معادل ریال","بودجه؛ تومان","باقی‌مانده؛ تومان — جزو موجودی پاکت نیست"};
+        for(int i=0;i<fields.length;i++) if(!row.get(fields[i]).isJsonNull()) {text(parent,labels[i],false);text(parent,row.get(fields[i]).getAsString(),true);}
     }
     private void openPublic(String page) {
         if (!Arrays.asList("guide", "terms", "costs", "security").contains(page)) return;

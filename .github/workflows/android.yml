@@ -44,10 +44,22 @@ jobs:
       - name: Independent Python contracts and bundled content
         run: |
           mkdir -p build/reports
+          python3 -m pip install 'jinja2==3.1.6'
           python3 tools/sync_public_content.py --check
           python3 -m unittest discover -s tests -v 2>&1 | tee build/reports/python-tests.txt
       - name: Tests, strict lint and debug build
         run: ./gradlew :core:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --no-daemon --rerun-tasks --console=plain
+      - name: Exercise native callbacks, expiry and contact consent
+        run: |
+          sdkmanager 'emulator' 'system-images;android-35;google_apis;x86_64'
+          printf 'no\n' | avdmanager create avd --force --name customer-checks --package 'system-images;android-35;google_apis;x86_64'
+          sudo chmod a+rw /dev/kvm
+          "$ANDROID_HOME/emulator/emulator" -avd customer-checks -no-window -no-audio -no-snapshot -no-boot-anim -gpu swiftshader_indirect -port 5554 > build/reports/emulator.log 2>&1 &
+          emulator_pid=$!
+          trap 'adb -s emulator-5554 emu kill || true; kill "$emulator_pid" 2>/dev/null || true' EXIT
+          timeout 180 bash -c 'until [ "$(adb -s emulator-5554 shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")" = "1" ]; do sleep 2; done'
+          ./gradlew :app:assembleDebugAndroidTest --no-daemon --no-parallel --max-workers=1 --console=plain
+          python3 tools/run_device_checks.py --serial emulator-5554 | tee build/reports/device-tests.txt
       - name: Validate debug artifact
         run: python3 tools/verify_apk.py debug
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

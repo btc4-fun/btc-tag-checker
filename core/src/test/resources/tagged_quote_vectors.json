@@ -1,0 +1,327 @@
+{
+  "source": "Synthetic Fraction oracle with algebraic budget inversion, independent of Java/Python product pricing",
+  "cases": [
+    {
+      "inputs": {
+        "btc_toman": "12345678901.12345678",
+        "usdt_toman": "98765.4321",
+        "fee_rate": "1.23456789",
+        "principal_sats": "500",
+        "include_tag": true
+      },
+      "mode": "principal",
+      "expected": {
+        "principal_sats": "500",
+        "btc": "0.00000500",
+        "network_sats": "175",
+        "print_sats": "121",
+        "tag_sats": "97",
+        "operator_sats": "134",
+        "total_sats": "1027",
+        "total_toman": "127425",
+        "total_rial": "1274250",
+        "budget_toman": null,
+        "remainder_toman": "0"
+      }
+    },
+    {
+      "inputs": {
+        "btc_toman": "12345678901.12345678",
+        "usdt_toman": "98765.4321",
+        "fee_rate": "1.23456789",
+        "principal_sats": "3000",
+        "include_tag": true
+      },
+      "mode": "principal",
+      "expected": {
+        "principal_sats": "3000",
+        "btc": "0.00003000",
+        "network_sats": "175",
+        "print_sats": "121",
+        "tag_sats": "97",
+        "operator_sats": "509",
+        "total_sats": "3902",
+        "total_toman": "484138",
+        "total_rial": "4841380",
+        "budget_toman": null,
+        "remainder_toman": "0"
+      }
+    },
+    {
+      "inputs": {
+        "btc_toman": "12345678901.12345678",
+        "usdt_toman": "98765.4321",
+        "fee_rate": "1.23456789",
+        "principal_sats": "2100000000000000",
+        "include_tag": true
+      },
+      "mode": "principal",
+      "expected": {
+        "principal_sats": "2100000000000000",
+        "btc": "21000000.00000000",
+        "network_sats": "175",
+        "print_sats": "121",
+        "tag_sats": "97",
+        "operator_sats": "315000000000059",
+        "total_sats": "2415000000000452",
+        "total_toman": "299638886189498221",
+        "total_rial": "2996388861894982210",
+        "budget_toman": null,
+        "remainder_toman": "0"
+      }
+    },
+    {
+      "inputs": {
+        "btc_toman": "12345678901.12345678",
+        "usdt_toman": "98765.4321",
+        "fee_rate": "1.23456789",
+        "budget_toman": "127425",
+        "include_tag": true
+      },
+      "mode": "budget",
+      "expected": {
+        "principal_sats": "500",
+        "btc": "0.00000500",
+        "network_sats": "175",
+        "print_sats": "121",
+        "tag_sats": "97",
+        "operator_sats": "134",
+        "total_sats": "1027",
+        "total_toman": "127425",
+        "total_rial": "1274250",
+        "budget_toman": "127425",
+        "remainder_toman": "0"
+      }
+    },
+    {
+      "inputs": {
+        "btc_toman": "12345678901.12345678",
+        "usdt_toman": "98765.4321",
+        "fee_rate": "1.23456789",
+        "budget_toman": "500001",
+        "include_tag": true
+      },
+      "mode": "budget",
+      "expected": {
+        "principal_sats": "3110",
+        "btc": "0.00003110",
+        "network_sats": "175",
+        "print_sats": "121",
+        "tag_sats": "97",
+        "operator_sats": "526",
+        "total_sats": "4029",
+        "total_toman": "499895",
+        "total_rial": "4998950",
+        "budget_toman": "500001",
+        "remainder_toman": "106"
+      }
+    },
+    {
+      "inputs": {
+        "btc_toman": "12345678901.12345678",
+        "usdt_toman": "98765.4321",
+        "fee_rate": "1.23456789",
+        "budget_toman": "299638886189498220",
+        "include_tag": true
+      },
+      "mode": "budget",
+      "expected": {
+        "principal_sats": "2099999999999999",
+        "btc": "20999999.99999999",
+        "network_sats": "175",
+        "print_sats": "121",
+        "tag_sats": "97",
+        "operator_sats": "315000000000059",
+        "total_sats": "2415000000000451",
+        "total_toman": "299638886189498097",
+        "total_rial": "2996388861894980970",
+        "budget_toman": "299638886189498220",
+        "remainder_toman": "123"
+      }
+    },
+    {
+      "inputs": {
+        "btc_toman": "12345678901.12345678",
+        "usdt_toman": "98765.4321",
+        "fee_rate": "1.23456789",
+        "budget_toman": "299638886189498221",
+        "include_tag": true
+      },
+      "mode": "budget",
+      "expected": {
+        "principal_sats": "2100000000000000",
+        "btc": "21000000.00000000",
+        "network_sats": "175",
+        "print_sats": "121",
+        "tag_sats": "97",
+        "operator_sats": "315000000000059",
+        "total_sats": "2415000000000452",
+        "total_toman": "299638886189498221",
+        "total_rial": "2996388861894982210",
+        "budget_toman": "299638886189498221",
+        "remainder_toman": "0"
+      }
+    },
+    {
+      "inputs": {
+        "btc_toman": "10000000000",
+        "usdt_toman": "100000",
+        "fee_rate": "1.1",
+        "principal_sats": "500",
+        "include_tag": true
+      },
+      "mode": "principal",
+      "expected": {
+        "principal_sats": "500",
+        "btc": "0.00000500",
+        "network_sats": "156",
+        "print_sats": "150",
+        "tag_sats": "120",
+        "operator_sats": "139",
+        "total_sats": "1065",
+        "total_toman": "107033",
+        "total_rial": "1070330",
+        "budget_toman": null,
+        "remainder_toman": "0"
+      }
+    },
+    {
+      "inputs": {
+        "btc_toman": "10000000000",
+        "usdt_toman": "100000",
+        "fee_rate": "1.1",
+        "principal_sats": "3000",
+        "include_tag": true
+      },
+      "mode": "principal",
+      "expected": {
+        "principal_sats": "3000",
+        "btc": "0.00003000",
+        "network_sats": "156",
+        "print_sats": "150",
+        "tag_sats": "120",
+        "operator_sats": "514",
+        "total_sats": "3940",
+        "total_toman": "395970",
+        "total_rial": "3959700",
+        "budget_toman": null,
+        "remainder_toman": "0"
+      }
+    },
+    {
+      "inputs": {
+        "btc_toman": "10000000000",
+        "usdt_toman": "100000",
+        "fee_rate": "1.1",
+        "principal_sats": "2100000000000000",
+        "include_tag": true
+      },
+      "mode": "principal",
+      "expected": {
+        "principal_sats": "2100000000000000",
+        "btc": "21000000.00000000",
+        "network_sats": "156",
+        "print_sats": "150",
+        "tag_sats": "120",
+        "operator_sats": "315000000000064",
+        "total_sats": "2415000000000490",
+        "total_toman": "242707500000049245",
+        "total_rial": "2427075000000492450",
+        "budget_toman": null,
+        "remainder_toman": "0"
+      }
+    },
+    {
+      "inputs": {
+        "btc_toman": "10000000000",
+        "usdt_toman": "100000",
+        "fee_rate": "1.1",
+        "budget_toman": "107033",
+        "include_tag": true
+      },
+      "mode": "budget",
+      "expected": {
+        "principal_sats": "500",
+        "btc": "0.00000500",
+        "network_sats": "156",
+        "print_sats": "150",
+        "tag_sats": "120",
+        "operator_sats": "139",
+        "total_sats": "1065",
+        "total_toman": "107033",
+        "total_rial": "1070330",
+        "budget_toman": "107033",
+        "remainder_toman": "0"
+      }
+    },
+    {
+      "inputs": {
+        "btc_toman": "10000000000",
+        "usdt_toman": "100000",
+        "fee_rate": "1.1",
+        "budget_toman": "500001",
+        "include_tag": true
+      },
+      "mode": "budget",
+      "expected": {
+        "principal_sats": "3900",
+        "btc": "0.00003900",
+        "network_sats": "156",
+        "print_sats": "150",
+        "tag_sats": "120",
+        "operator_sats": "649",
+        "total_sats": "4975",
+        "total_toman": "499988",
+        "total_rial": "4999880",
+        "budget_toman": "500001",
+        "remainder_toman": "13"
+      }
+    },
+    {
+      "inputs": {
+        "btc_toman": "10000000000",
+        "usdt_toman": "100000",
+        "fee_rate": "1.1",
+        "budget_toman": "242707500000049244",
+        "include_tag": true
+      },
+      "mode": "budget",
+      "expected": {
+        "principal_sats": "2099999999999999",
+        "btc": "20999999.99999999",
+        "network_sats": "156",
+        "print_sats": "150",
+        "tag_sats": "120",
+        "operator_sats": "315000000000064",
+        "total_sats": "2415000000000489",
+        "total_toman": "242707500000049145",
+        "total_rial": "2427075000000491450",
+        "budget_toman": "242707500000049244",
+        "remainder_toman": "99"
+      }
+    },
+    {
+      "inputs": {
+        "btc_toman": "10000000000",
+        "usdt_toman": "100000",
+        "fee_rate": "1.1",
+        "budget_toman": "242707500000049245",
+        "include_tag": true
+      },
+      "mode": "budget",
+      "expected": {
+        "principal_sats": "2100000000000000",
+        "btc": "21000000.00000000",
+        "network_sats": "156",
+        "print_sats": "150",
+        "tag_sats": "120",
+        "operator_sats": "315000000000064",
+        "total_sats": "2415000000000490",
+        "total_toman": "242707500000049245",
+        "total_rial": "2427075000000492450",
+        "budget_toman": "242707500000049245",
+        "remainder_toman": "0"
+      }
+    }
+  ]
+}
