@@ -7,6 +7,12 @@ import tempfile
 import textwrap
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 class CiContract(unittest.TestCase):
+ def test_avd_creation_and_emulator_share_explicit_home(self):
+  text=(ROOT/'.github/workflows/android.yml').read_text()
+  block=text.split('      - name: Exercise native callbacks, expiry and contact consent\n',1)[1].split('      - name:',1)[0]
+  self.assertIn('export ANDROID_AVD_HOME="$RUNNER_TEMP/customer-avd"',block)
+  self.assertLess(block.index('export ANDROID_AVD_HOME='),block.index('avdmanager create avd'))
+  self.assertIn('test -s "$ANDROID_AVD_HOME/customer-checks.ini"',block)
  def test_market_lifecycle_instrumentation_is_executed(self):
   text=(ROOT/'.github/workflows/android.yml').read_text()
   self.assertIn('python3 tools/run_device_checks.py --serial emulator-5554',text)
@@ -108,5 +114,5 @@ class CiContract(unittest.TestCase):
   self.assertIn("resValue 'string', 'app_name', 'btc4fun (Debug)'",text)
   self.assertIn('btc4fun-${variant.buildType.name}.apk',text)
   self.assertIn('ANDROID_RELEASE_STORE_PASSWORD',text)
-  self.assertIn("versionCode 6; versionName '1.1.0'",text)
+  self.assertIn("versionCode 7; versionName '1.1.1'",text)
 if __name__=='__main__':unittest.main()
