@@ -18,7 +18,13 @@ def validate_identity(metadata, badging, variant):
     if element['outputFile'] != expected_file:
         raise ValueError('Unexpected APK filename')
     match = re.search(r"package: name='([^']+)' versionCode='([^']+)' versionName='([^']+)'", badging)
-    expected = (metadata['applicationId'], str(element['versionCode']), element['versionName'])
+    gradle = (ROOT/'app/build.gradle').read_text()
+    version = re.search(r"\bversionName '([^']+)'", gradle).group(1)
+    code = re.search(r'\bversionCode ([0-9]+)', gradle).group(1)
+    package = 'com.saebm.btcnfccustomer' + ('.debug' if variant == 'debug' else '')
+    expected = (package, code, version + ('-test-only' if variant == 'debug' else ''))
+    if (metadata['applicationId'], str(element['versionCode']), element['versionName']) != expected:
+        raise ValueError('Gradle output metadata differs from current release identity')
     if match is None or match.groups() != expected:
         raise ValueError('APK identity differs from Gradle output metadata')
     label = 'btc4fun' + (' (Debug)' if variant == 'debug' else '')
@@ -29,7 +35,7 @@ def validate_identity(metadata, badging, variant):
 def validate_signer(output, expected):
     fingerprints = re.findall(r'^Signer #\d+ certificate SHA-256 digest: ([0-9a-f]{64})$', output, re.M)
     if not re.fullmatch(r'[0-9a-f]{64}', expected) or fingerprints != [expected]:
-        raise ValueError('Release signing certificate differs from approved existing user key')
+        raise ValueError('Release signing certificate differs from approved shared signing key')
 
 
 def main():

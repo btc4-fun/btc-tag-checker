@@ -3,6 +3,7 @@ name: btc4fun — Android
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
     inputs:
@@ -71,8 +72,13 @@ jobs:
           retention-days: 14
 
   signed-release:
-    name: Manually requested user-signed APK (no publishing)
-    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.signed_release }}
+    name: Verified signed APK and tag release
+    if: ${{ (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.signed_release) || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) }}
+    permissions:
+      contents: write
+    concurrency:
+      group: signed-release-${{ github.ref }}
+      cancel-in-progress: false
     needs: tests-lint-debug
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -83,6 +89,13 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+          fetch-depth: 0
+      - name: Admit trusted release event before secrets
+        env:
+          SIGNED_RELEASE: ${{ inputs.signed_release }}
+        run: |
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          python3 tools/release_guard.py
       - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
         with:
           distribution: temurin
@@ -131,10 +144,24 @@ jobs:
       - name: Always remove temporary signing file
         if: always()
         run: rm -f -- "$RUNNER_TEMP/btc-tag-checker-release.jks"
-      - name: Validate release and match existing SMS app signer
+      - name: Validate release and match approved shared signer
         env:
-          EXPECTED_RELEASE_CERT_SHA256: cdee481eac2d81904d0bed6281b956fe56e4f67ca37c5479592f4c89a18912f4
+          EXPECTED_RELEASE_CERT_SHA256: 7c4ccefc998b2407b22c2a7a3bc97e9b5f9baca3089886a5e71dcfef85b0fa3b
         run: python3 tools/verify_apk.py release
+      - name: Publish verified tag release
+        if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            app/build/outputs/apk/release/btc4fun-release.apk \
+            app/build/outputs/apk/release/SHA256SUMS \
+            --verify-tag --title "btc4fun $RELEASE_TAG" \
+            --notes-file .github/release-notes.md \
+            --draft=false --prerelease=false --latest
+          gh release view "$RELEASE_TAG" --json tagName,isDraft,isPrerelease,assets,url
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: btc4fun-release-${{ github.sha }}

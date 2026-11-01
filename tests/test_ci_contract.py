@@ -53,9 +53,46 @@ class CiContract(unittest.TestCase):
   self.assertIn('0o600',text)
   self.assertIn('if-no-files-found: error',text)
   self.assertIn('retention-days: 14',text)
-  self.assertIn('cdee481eac2d81904d0bed6281b956fe56e4f67ca37c5479592f4c89a18912f4',text)
+  self.assertIn('7c4ccefc998b2407b22c2a7a3bc97e9b5f9baca3089886a5e71dcfef85b0fa3b',text)
   self.assertNotIn('keytool',text)
-  self.assertNotIn('gh release',text)
+  self.assertIn("tags: ['v*']",text)
+  release=text.split('  signed-release:',1)[1]
+  self.assertIn("github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')",release)
+  self.assertIn('fetch-depth: 0',release)
+  self.assertLess(release.index('python3 tools/release_guard.py'),release.index('secrets.ANDROID_RELEASE_'))
+  self.assertIn('git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main',release)
+  self.assertEqual(text.count('contents: write'),1)
+  self.assertNotIn('contents: write',text.split('  signed-release:',1)[0])
+  self.assertIn('permissions:\n      contents: write',release)
+  publish=release.split('      - name: Publish verified tag release\n',1)[1].split('      - uses:',1)[0]
+  self.assertIn("if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}",publish)
+  self.assertLess(release.index('python3 tools/verify_apk.py release'),release.index('Publish verified tag release'))
+  for required in ['gh release create "$RELEASE_TAG"', '--verify-tag', '--draft=false', '--prerelease=false', '--latest', '--notes-file .github/release-notes.md', 'app/build/outputs/apk/release/btc4fun-release.apk', 'app/build/outputs/apk/release/SHA256SUMS']:
+   self.assertIn(required,publish)
+  self.assertNotIn('debug',publish)
+  self.assertNotIn('--generate-notes',publish)
+  self.assertTrue((ROOT/'.github/release-notes.md').is_file())
+ def test_publication_shell_uses_exact_assets_and_noninterpolated_tag(self):
+  import json
+  text=(ROOT/'.github/workflows/android.yml').read_text()
+  block=text.split('      - name: Publish verified tag release\n',1)[1].split('      - uses:',1)[0]
+  script=textwrap.dedent(block.split('        run: |\n',1)[1])
+  with tempfile.TemporaryDirectory() as directory:
+   folder=pathlib.Path(directory)
+   gh=folder/'gh'
+   gh.write_text('#!/usr/bin/env python3\nimport json, os, sys\nwith open(os.environ["CALLS"], "a") as f: f.write(json.dumps(sys.argv[1:])+"\\n")\n')
+   gh.chmod(0o755)
+   calls=folder/'calls.jsonl'
+   tag='v1.0.0'
+   result=subprocess.run(['bash','-euo','pipefail','-c',script],cwd=ROOT,
+     env=dict(os.environ,PATH=str(folder)+os.pathsep+os.environ['PATH'],CALLS=str(calls),RELEASE_TAG=tag),capture_output=True,text=True)
+   self.assertEqual(result.returncode,0,result.stderr)
+   commands=[json.loads(line) for line in calls.read_text().splitlines()]
+   self.assertEqual(commands[0],['release','create',tag,
+     'app/build/outputs/apk/release/btc4fun-release.apk','app/build/outputs/apk/release/SHA256SUMS',
+     '--verify-tag','--title','btc4fun '+tag,'--notes-file','.github/release-notes.md',
+     '--draft=false','--prerelease=false','--latest'])
+   self.assertEqual(commands[1][:3],['release','view',tag])
  def test_release_cannot_fall_back_to_debug_identity(self):
   text=(ROOT/'app/build.gradle').read_text()
   self.assertIn("applicationId 'com.saebm.btcnfccustomer'",text)
@@ -66,5 +103,5 @@ class CiContract(unittest.TestCase):
   self.assertIn("resValue 'string', 'app_name', 'btc4fun (Debug)'",text)
   self.assertIn('btc4fun-${variant.buildType.name}.apk',text)
   self.assertIn('ANDROID_RELEASE_STORE_PASSWORD',text)
-  self.assertIn("versionCode 3; versionName '0.1.2'",text)
+  self.assertIn("versionCode 4; versionName '1.0.0'",text)
 if __name__=='__main__':unittest.main()

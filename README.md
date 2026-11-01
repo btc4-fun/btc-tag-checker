@@ -1,94 +1,232 @@
-# btc4fun
+# برنامهٔ مشتری بیت‌کوین
 
-Java/native Android views, Persian RTL. **Test-only debug artifact**, not a wallet, not an authenticity verifier, and not a device-tested release. Application identity: `com.saebm.btcnfccustomer`; debug identity: `com.saebm.btcnfccustomer.debug`. Android 8/API 26 minimum; target/compile API 35.
+btc4fun
 
-The native instructions use short Persian sentences, explain the tag/scan action and satoshi, confirmed/pending amounts and source freshness, and keep the data-sharing and no-authenticity warnings. Website colors, logo, Sahel fonts and safe-area layout are preserved.
+برنامهٔ اندرویدی فارسی برای خواندن شناسهٔ برچسب و دیدن اطلاعات نشانی عمومی مرتبط، فقط با اجازهٔ شما. این برنامه کیف پول نیست؛ اصالت برچسب، مالکیت، پرداخت یا امکان خرج‌کردن موجودی را تضمین نمی‌کند.
 
-## Behavior and privacy
+## نصب و نسخه
 
-- Explicitly arm NFC reader mode; read only `Tag.getId()` raw bytes, in original order, uppercase contiguous hex. Only 4/7/10-byte identifiers accepted; leading zeroes preserved. Skip NDEF; no tag writing, keys, recovery words, camera or storage permissions.
-- Scanning does **not** request the network. A separate Persian consent dialog is required for each initial request and each manual history page. Disclosure: the UID goes to `btc4.fun`; that server sends the associated public Bitcoin address to Blockstream. UID matching does not prove ownership, authenticity, payment or exclusive custody.
-- Only `GET https://btc4.fun/api/tags/{UID}` with optional validated `after_txid` is constructed. Default system TLS/hostname checks; no redirects, cookies, credentials, cache, logging interceptor, automatic polling or retries. An explicit interceptor blocks OkHttp's otherwise automatic `503 + Retry-After: 0` follow-up; this has a regression test.
-- Connect/read timeout 5 seconds; whole-call timeout 15 seconds; body limit 262144 bytes, strict UTF-8 and JSON. JSON nesting, arrays and field strings bounded; duplicate keys, floats, numeric strings, overflow, wrong scope, unconfirmed history and invalid/repeated cursors fail closed. Integer satoshi amounts never pass through floating point.
-- Requests run off the UI thread. Leaving foreground or navigating cancels work and invalidates a generation fence. A late result cannot overwrite current state. Rotation deliberately discards inquiry state rather than restoring identifiers or auto-requesting. Only one history page is retained; each next page replaces the previous page. Starting initial inquiry again resets pagination.
-- Confirmed sats and signed pending delta are separate. Confirmed history shows net address delta, not whole transaction value. Source and conservative server request-start timestamp are shown with non-atomic/freshness warnings. No spendability/coinbase maturity claim. A returned continuation is only a candidate; the next page can be empty.
-- 400/404/429/503 and malformed/timeout/network responses never become a fake zero balance. Disabled backend (`503 tag_lookup_disabled`) is displayed as unavailable without parsing error bodies. 429 countdown is a local display of suggested waiting, not server enforcement, and never schedules a request.
-- No inquiry persistence or raw UID/body application logging. Backup, device transfer content and cleartext disabled. No WebView. Public pages open only from an explicit fixed allowlist in an external browser, with no UID/address appended.
+نسخهٔ انتشار و کد نصب:
 
-## Bundled offline content
+```text
+1.0.0
+versionCode: 4
+```
 
-Guide, terms, payment, security and price-link pages are native scrollable text. Snapshot metadata and a verify-current-payment disclaimer appear in each page. The exact public card, numeric sheba and holder are copied from the site's trusted payment partial; **no stale price/rate is bundled**. Prices are only linked to the current `/costs` page. No images, scripts, forms or secret examples are packaged. Hidden interactive questionnaire controls are omitted: offline security is guidance, not an interactive risk score.
+حداقل اندروید مورد نیاز:
 
-The checked-in snapshot is sufficient: building and testing require **no parent checkout** and no Jinja2. Verify it with:
+```text
+Android 8 / API 26
+```
+
+فایل امضاشده را از بخش انتشارهای مخزن دریافت کنید. وجود این راهنما به معنی انجام‌شدن انتشار نیست؛ وضعیت واقعی را در همان صفحه بررسی کنید.
+
+[Releases](https://github.com/btc4-fun/btc-tag-checker/releases)
+
+فایل نصب و فایل بررسی صحت را کنار هم قرار دهید:
+
+```text
+btc4fun-release.apk
+SHA256SUMS
+```
+
+```sh
+sha256sum -c SHA256SUMS
+```
+
+شناسهٔ برنامهٔ اصلی و شناسهٔ جداگانهٔ نسخهٔ آزمایشی:
+
+```text
+com.saebm.btcnfccustomer
+com.saebm.btcnfccustomer.debug
+```
+
+نام نسخهٔ آزمایشی و پسوند نسخه:
+
+```text
+btc4fun (Debug)
+1.0.0-test-only
+```
+
+نسخهٔ آزمایشی جایگزین فایل انتشار نیست. سازگاری به‌روزرسانی میان امضاهای آزمایشی اجراهای مختلف تضمین نمی‌شود.
+
+## استفاده و حریم خصوصی
+
+- ابتدا خواندن برچسب را فعال کنید و برچسب را نزدیک گوشی بگیرید. برنامه فقط شناسهٔ خام برچسب را می‌خواند؛ چیزی روی آن نمی‌نویسد.
+- خواندن برچسب به‌تنهایی درخواست اینترنت نمی‌فرستد. برای اولین استعلام و هر صفحهٔ بعدی تاریخچه، اجازهٔ جداگانه لازم است.
+- شناسه به سرویس سایت فرستاده می‌شود. سرویس، نشانی عمومی مرتبط را برای دریافت اطلاعات زنجیره به ارائه‌دهندهٔ داده می‌فرستد. تطبیق شناسه به معنی اصالت یا مالکیت نیست.
+- مبلغ تأییدشده و تغییر مبلغ در انتظار تأیید جدا نمایش داده می‌شوند. خطای شبکه، پاسخ نامعتبر یا غیرفعال‌بودن سرویس هرگز موجودی صفر تلقی نمی‌شود.
+- درخواست خودکار دوره‌ای، تلاش دوبارهٔ خودکار یا بارگذاری خودکار صفحهٔ بعد وجود ندارد. خروج از صفحه یا رفتن برنامه به پس‌زمینه، درخواست جاری را لغو می‌کند و پاسخ دیررس کنار گذاشته می‌شود.
+- شناسه، پاسخ استعلام و وضعیت صفحه ذخیره نمی‌شوند. چرخش صفحه استعلام تازه‌ای انجام نمی‌دهد. نسخهٔ پشتیبان و انتقال دادهٔ برنامه غیرفعال است.
+- مجوز دوربین و حافظه درخواست نمی‌شود. کلمات بازیابی و کلید خصوصی خوانده نمی‌شوند.
+
+سرویس و ارائه‌دهندهٔ داده:
+
+```text
+https://btc4.fun
+Blockstream
+```
+
+تنها مسیر درخواست، با نشانگر معتبر اختیاری برای صفحهٔ بعد:
+
+```text
+GET https://btc4.fun/api/tags/{UID}
+after_txid
+```
+
+شناسه فقط با طول‌های مجاز و با حفظ صفرهای ابتدایی پذیرفته می‌شود. ارتباط رمزگذاری‌شده با اعتبارسنجی عادی سیستم برقرار می‌شود؛ تغییر مسیر، کوکی، اعتبارنامه، ثبت بدنه و حافظهٔ نهان درخواست نداریم. زمان کل درخواست و اندازهٔ پاسخ محدود است. مبلغ‌ها با عدد صحیح ساتوشی پردازش می‌شوند، نه اعشار شناور.
+
+## راهنمای آفلاین
+
+راهنما، شرایط، پرداخت و نکات امنیتی به صورت متن بومی داخل برنامه هستند. زمان تهیهٔ محتوا مشخص است؛ اطلاعات پرداخت را پیش از پرداخت با سایت تطبیق دهید. نرخ یا قیمت قدیمی در برنامه بسته‌بندی نشده و صفحهٔ هزینه‌ها به سایت ارجاع می‌دهد. راهنمای امنیتی آفلاین، پرسش‌نامهٔ تعاملی یا تضمین امنیت نیست.
+
+ساخت و آزمون به مخزن قبلی یا دسترسی به سایت وابسته نیست:
 
 ```sh
 python3 tools/sync_public_content.py --check
 python3 -m unittest discover -s tests -v
 ```
 
-For an intentional refresh only, install Jinja2 3.1.6 in a separate Python environment and run `python3 tools/sync_public_content.py --source-root /path/to/btc-envelope-maker`. With no argument the tool verifies, rather than regenerates, the bundle. The generator renders a fixed public-template whitelist with `StrictUndefined` and a dictionary loader, then uses stdlib HTMLParser. It never imports the backend app, invokes dynamic prices, queries wallets, downloads pages or reads secret configuration. `app/src/main/assets/public/manifest.json` records template and output SHA-256 digests and UTC snapshot time. Snapshot changes require rebuilding; the APK verifier compares every packaged page with the checked-in snapshot.
+فقط برای تازه‌سازی عمدی محتوای عمومی، وابستگی زیر را در محیط جدا نصب کرده و مسیر مخزن سایت را بدهید:
 
-## Local build
+```text
+Jinja2 3.1.6
+```
 
-Use the checked-in, verified Gradle 8.9 wrapper and JDK 17. AGP 8.7.0, platform 35, build tools 36.0.0. No committed `local.properties`; choose an installed SDK via environment.
+```sh
+python3 tools/sync_public_content.py --source-root /path/to/btc-envelope-maker
+```
+
+مولد فقط قالب‌های عمومی مشخص‌شده را می‌خواند. برنامهٔ سرور، قیمت زنده، کیف پول و تنظیمات محرمانه را بارگذاری نمی‌کند. فایل زیر زمان و چکیدهٔ محتوا را ثبت می‌کند. پس از تغییر محتوا، بسته باید دوباره ساخته شود:
+
+```text
+app/src/main/assets/public/manifest.json
+```
+
+## ساخت محلی
+
+ابزارها و نسخه‌های پروژه:
+
+```text
+JDK 17
+Gradle 8.9
+AGP 8.7.0
+compileSdk / targetSdk: 35
+Android build-tools: 36.0.0
+```
+
+از راه‌انداز داخل مخزن استفاده کنید. مسیر ابزارهای محلی را در مخزن ثبت نکنید:
 
 ```sh
 export JAVA_HOME=/path/to/jdk-17
 export ANDROID_HOME=/path/to/android-sdk
 export ANDROID_SDK_ROOT="$ANDROID_HOME"
+export PATH="$JAVA_HOME/bin:$PATH"
 python3 -m unittest discover -s tests -v
-./gradlew :core:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --no-daemon --rerun-tasks --console=plain
-```
-
-After dependencies are cached, `--offline` works. Offline is **not** appropriate on a fresh GitHub runner. Runtime dependencies are Gson 2.11.0 and OkHttp 4.12.0; JUnit 4.13.2 and MockWebServer/TLS 4.12.0 are test-only. Pure core tests run on the host JVM; Android variant tests test core wiring, not a running activity. Python tests check manifest/source/CI/content contracts, not rendered UI.
-
-Output: `app/build/outputs/apk/debug/btc4fun-debug.apk` (debug-signed, test-only). Its display label is `btc4fun (Debug)`; the release label is exactly `btc4fun`. Package names and repository `btc-tag-checker` are unchanged. Version code is 3 and version name is `0.1.2` (`0.1.2-test-only` for debug); `app/build.gradle` is their single source. Verify:
-
-```sh
+./gradlew :core:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --no-daemon --no-parallel --max-workers=1 --rerun-tasks --console=plain
 python3 tools/verify_apk.py debug
 ```
 
-### Wrapper provenance
+خروجی آزمایشی:
 
-Generated using the installed official Gradle 8.9 distribution, then compared with the official checksum endpoint. Wrapper JAR SHA-256:
+```text
+app/build/outputs/apk/debug/btc4fun-debug.apk
+```
 
-`498495120a03b9a6ab5d155f5de3c8f0d986a449153702fb80fc80e134484f17`
+ساخت آفلاین فقط بعد از ذخیره‌شدن وابستگی‌ها ممکن است؛ اجرای تازهٔ میزبان خودکار نباید آفلاین باشد. وابستگی‌های زمان اجرا:
 
-The distribution SHA-256 is pinned in `gradle/wrapper/gradle-wrapper.properties`:
+```text
+Gson 2.11.0
+OkHttp 4.12.0
+```
 
-`258e722ec21e955201e31447b0aed14201765a3bfbae296a46cf60b70e66db70`
+چکیدهٔ راه‌انداز رسمی و توزیع در مخزن تثبیت شده‌اند:
 
-Sources: `https://services.gradle.org/distributions/gradle-8.9-wrapper.jar.sha256` and `https://services.gradle.org/distributions/gradle-8.9-all.zip.sha256`.
+```text
+Wrapper JAR SHA-256:
+498495120a03b9a6ab5d155f5de3c8f0d986a449153702fb80fc80e134484f17
+Gradle distribution SHA-256:
+258e722ec21e955201e31447b0aed14201765a3bfbae296a46cf60b70e66db70
+```
 
-## GitHub Actions
+[Wrapper checksum](https://services.gradle.org/distributions/gradle-8.9-wrapper.jar.sha256)
 
-The independent `.github/workflows/android.yml` runs tests, strict lint, debug build and APK validation on pushes to `main`, pull requests and manual runs. All actions are pinned to verified immutable commits. Default permissions are read-only; checkout does not persist credentials. APKs upload only after successful validation; reports upload even after failure, with explicit 14-day retention and missing-file errors. No release publication or deployment is automated. Debug signing certificates on ephemeral runners may differ between runs; update compatibility is not promised.
+[Distribution checksum](https://services.gradle.org/distributions/gradle-8.9-all.zip.sha256)
 
-Manual `signed_release=true` runs a dependent release job **only on main after tests succeed**, using these repository secrets:
+## ساخت و انتشار خودکار
 
-- `ANDROID_RELEASE_KEYSTORE_BASE64`: base64 bytes of the existing user signing keystore.
-- `ANDROID_RELEASE_STORE_PASSWORD`
-- `ANDROID_RELEASE_KEY_ALIAS`
-- `ANDROID_RELEASE_KEY_PASSWORD`
+فایل گردش کار:
 
-The user must set the existing values themselves at https://github.com/btc4-fun/btc-tag-checker/settings/secrets/actions . Stored GitHub secret values cannot be read or copied by API. Never send passwords or key contents in chat. No local release key has been searched for, read, copied or generated during this extraction.
+```text
+.github/workflows/android.yml
+```
 
-Secrets are available only in the signing step, never job-wide or to pull requests. That step writes the supplied keystore exclusively in the runner temporary directory with mode 0600 and removes it with exit/signal traps. A separate `always()` cleanup is the fallback; abrupt machine termination ultimately relies on ephemeral hosted runner destruction. Missing/invalid values fail closed. Signed output is `app/build/outputs/apk/release/btc4fun-release.apk`. Gradle caching is disabled for the release job, and the signing invocation uses a single-use daemon.
+ارسال به شاخهٔ اصلی، درخواست ادغام، اجرای دستی و ارسال برچسب نسخه، آزمون‌ها، بررسی سخت‌گیرانهٔ کد و ساخت آزمایشی را اجرا می‌کنند. اکشن‌ها به شناسه‌های تغییرناپذیر قبلی مقید مانده‌اند. دسترسی پیش‌فرض فقط خواندنی است و اعتبارنامه در تنظیمات گیت نگهداری نمی‌شود.
 
-Release verification also requires the certificate SHA-256 below, independently established from the public SMS app release, not inferred from secret names:
+شاخه و الگوی برچسب:
 
-`cdee481eac2d81904d0bed6281b956fe56e4f67ca37c5479592f4c89a18912f4`
+```text
+main
+v*
+```
 
-Reference: https://github.com/sae13/android-sms-to-ntfy/releases/download/android-native-5ce03990e38533b545e665dbc6ffa74029effca6/sms-ntfy-android-native-arm64-v8a.apk
+ساخت امضاشده فقط پس از موفقیت مرحلهٔ آزمون انجام می‌شود: یا اجرای دستی روی شاخهٔ اصلی با گزینهٔ امضا، یا ارسال برچسبی که دقیقاً با نسخهٔ پروژه برابر باشد و تغییر آن در تاریخچهٔ شاخهٔ اصلی وجود داشته باشد. رویداد، تغییر دریافت‌شده، هدف برچسب، نسخه و نسبت تاریخی پیش از دسترسی به اسرار بررسی می‌شوند.
 
-Until a signed customer artifact passes that comparison, reuse of the user's key remains **unverified**. Existing installed customer versions/signers were not inspected; version code advances to 3, but signer-compatible upgrades have not been tested. Never uninstall to bypass a certificate mismatch without the user's explicit data-loss approval.
+```text
+signed_release=true
+v1.0.0
+```
 
-### Local release gate
+اجرای دستی فقط بستهٔ امضاشده را به پیوست اجرای خودکار می‌افزاید؛ انتشار عمومی نمی‌سازد. ارسال برچسب معتبر پس از ساخت و بررسی امضای بسته، فایل امضاشده و چکیدهٔ هم‌پوشهٔ آن را منتشر می‌کند. انتشار صریحاً نهایی، غیرپیش‌نویس و آخرین نسخه تعیین می‌شود. فقط کار انتشار دسترسی نوشتن دارد. برچسب موجود باید تأیید شود؛ یادداشت انتشار از فایل فارسی ثابت خوانده می‌شود. انتشار موجود بازنویسی نمی‌شود و اجرای دوباره ممکن است به دلیل وجود آن متوقف شود.
 
-For an authorized local release, use a secret manager to supply `ANDROID_RELEASE_KEYSTORE` (an existing keystore path) and the three password/alias variables above, then run `./gradlew :app:assembleRelease`. Do not put values in source, command history or chat. Every requested release task fails without all variables and an existing file. There is no unsigned/debug-key fallback. Missing-credential refusal has been executed; a user-signed release remains unverified. See `VERIFICATION.md` for actual local evidence and remaining hosted/device gates.
+```text
+.github/release-notes.md
+gh release create --verify-tag
+```
 
-## Verification boundaries / next gate
+برای نسخه‌های آینده، همراه نسخهٔ پروژه یادداشت ثابت انتشار را نیز به‌روز کنید. گزارش‌ها حتی در شکست نگهداری می‌شوند؛ فایل نصب فقط پس از بررسی موفق بارگذاری می‌شود.
 
-Unit tests include leading-zero UID vectors, exact integer parsing, bounded bodies, JSON errors, fixed-origin/cursor validation, status handling, local TLS slow-drip timeout, cancellation, generation fencing and the no-503-retry case. Synthetic fixtures live exclusively in test sources; none is a live screen fallback. Real sockets are loopback test servers only; no customer wallet was queried.
+## امضای انتشار
 
-Prior emulator-only design checks are recorded in `DESIGN-VERIFICATION.md`; current rename/copy checks are recorded in `VERIFICATION.md`. No physical-device NFC scan was performed. Remaining physical-device acceptance: RTL rendering/font scaling/insets, NFC toggled off/on, rapid scans, consent cancellation, rotation/background cancellation, manual pagination and screen-reader behavior. Backend is intentionally gated off until the parent enables/deploys it. Do not claim end-to-end service operation from these local tests. Java compilation emits a compatibility deprecation note for the older platform inset API; strict Android lint passes.
+چهار راز استاندارد مخزن از بیرون این کار تنظیم شده‌اند؛ این کار آن‌ها یا فایل کلید محلی را نخوانده و تغییر نداده است:
+
+```text
+ANDROID_RELEASE_KEYSTORE_BASE64
+ANDROID_RELEASE_STORE_PASSWORD
+ANDROID_RELEASE_KEY_ALIAS
+ANDROID_RELEASE_KEY_PASSWORD
+```
+
+اسرار فقط در گام امضا قرار می‌گیرند. فایل کلید در پوشهٔ موقت اجرا با دسترسی محدود ایجاد و در خروج، سیگنال یا گام پاک‌سازی حذف می‌شود. در قطع ناگهانی ماشین، حذف نهایی به نابودی ماشین موقت میزبان وابسته است. حافظهٔ نهان گرادل برای کار انتشار خاموش است. کمبود یا نامعتبر بودن اطلاعات باعث توقف می‌شود؛ ساخت کلید تازه، خروجی بدون امضا یا جایگزینی با کلید آزمایشی مجاز نیست.
+
+اثر انگشت عمومی کلید مشترک تازه و مورد تأیید کاربر:
+
+```text
+7c4ccefc998b2407b22c2a7a3bc97e9b5f9baca3089886a5e71dcfef85b0fa3b
+```
+
+این انتظار جایگزین تطبیق تاریخی با امضای برنامهٔ پیامک شده است. به‌روزرسانی روی برنامه‌ای با امضای متفاوت ممکن نیست. بدون بررسی و پذیرش پیامدها، حذف برنامه راه‌حل این اختلاف نیست. آزمون ارتقا روی دستگاه واقعی هنوز انجام نشده است.
+
+برای ساخت محلی مجاز، مدیر اسرار باید مسیر کلید موجود و سه مقدار لازم دیگر را به محیط بدهد. رمز یا محتوای کلید را در گفتگو، تاریخچهٔ فرمان یا مخزن ننویسید:
+
+```text
+ANDROID_RELEASE_KEYSTORE
+ANDROID_RELEASE_STORE_PASSWORD
+ANDROID_RELEASE_KEY_ALIAS
+ANDROID_RELEASE_KEY_PASSWORD
+```
+
+```sh
+./gradlew :core:test :app:testReleaseUnitTest :app:lintRelease :app:assembleRelease --no-daemon --rerun-tasks --console=plain
+EXPECTED_RELEASE_CERT_SHA256=7c4ccefc998b2407b22c2a7a3bc97e9b5f9baca3089886a5e71dcfef85b0fa3b python3 tools/verify_apk.py release
+```
+
+## مرز شواهد
+
+آزمون‌های میزبان، کنترل نسخه و گردش کار و بررسی فایل ساخته‌شده، جای آزمون روی گوشی واقعی نیستند. در این تغییر، رفتار برنامه و محتوای عمومی دست نخورده است. اسکن واقعی، استعلام سرویس زنده، ارتقای سازگار با امضا و آزمون دسترس‌پذیری دستگاه هنوز ادعا نمی‌شوند. غیرفعال‌بودن سرویس باید به صورت عدم دسترسی نمایش داده شود.
+
+نتایج فعلی و شواهد تاریخی طراحی را جدا بخوانید:
+
+[Verification](VERIFICATION.md)
+
+[Historical design verification](DESIGN-VERIFICATION.md)
