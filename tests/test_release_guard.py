@@ -26,23 +26,23 @@ class ReleaseGuard(unittest.TestCase):
             git('commit', '-m', 'fixture')
             sha = git('rev-parse', 'HEAD')
             git('update-ref', 'refs/remotes/origin/main', sha)
-            git('tag', '-a', 'v1.1.1', '-m', 'fixture')
+            git('tag', '-a', 'v1.1.2', '-m', 'fixture')
             def check(event, ref, signed, expected, commit=sha):
                 env = dict(os.environ, GITHUB_EVENT_NAME=event, GITHUB_REF=ref,
                            GITHUB_SHA=commit, SIGNED_RELEASE=signed)
                 result = subprocess.run(['python3', str(script)], cwd=repo, env=env, capture_output=True, text=True)
                 self.assertEqual(result.returncode == 0, expected, (event, ref, result.stdout, result.stderr))
-            check('push', 'refs/tags/v1.1.1', '', True)
+            check('push', 'refs/tags/v1.1.2', '', True)
             check('workflow_dispatch', 'refs/heads/main', 'true', True)
             for event, ref, signed in [('push', 'refs/heads/main', ''),
-                                       ('pull_request', 'refs/tags/v1.1.1', ''),
+                                       ('pull_request', 'refs/tags/v1.1.2', ''),
                                        ('workflow_dispatch', 'refs/heads/other', 'true'),
                                        ('workflow_dispatch', 'refs/heads/main', 'false'),
-                                       ('workflow_dispatch', 'refs/tags/v1.1.1', 'true'),
+                                       ('workflow_dispatch', 'refs/tags/v1.1.2', 'true'),
                                        ('push', 'refs/tags/v1.0.1', ''),
-                                       ('push', 'refs/tags/v1.1.1-rc1', '')]:
+                                       ('push', 'refs/tags/v1.1.2-rc1', '')]:
                 check(event, ref, signed, False)
-            check('push', 'refs/tags/v1.1.1', '', False, '0' * 40)
+            check('push', 'refs/tags/v1.1.2', '', False, '0' * 40)
             # A tag on an older main ancestor is valid even after main advances.
             (repo / 'next').write_text('next')
             git('add', '.')
@@ -50,19 +50,19 @@ class ReleaseGuard(unittest.TestCase):
             next_sha = git('rev-parse', 'HEAD')
             git('update-ref', 'refs/remotes/origin/main', next_sha)
             git('checkout', '--detach', sha)
-            check('push', 'refs/tags/v1.1.1', '', True)
+            check('push', 'refs/tags/v1.1.2', '', True)
             # A matching version/tag on an unrelated branch must fail closed.
             git('checkout', '--orphan', 'untrusted')
             git('commit', '-m', 'unrelated')
             untrusted = git('rev-parse', 'HEAD')
-            git('tag', '-f', 'v1.1.1')
-            check('push', 'refs/tags/v1.1.1', '', False, untrusted)
+            git('tag', '-f', 'v1.1.2')
+            check('push', 'refs/tags/v1.1.2', '', False, untrusted)
             # A tag must resolve to the checked-out event commit, not just exist.
             git('checkout', '--detach', sha)
-            check('push', 'refs/tags/v1.1.1', '', False)
-            git('tag', '-f', 'v1.1.1', sha)
+            check('push', 'refs/tags/v1.1.2', '', False)
+            git('tag', '-f', 'v1.1.2', sha)
             (repo / 'app/build.gradle').write_text("versionCode 4; versionName '01.0.0'")
-            check('push', 'refs/tags/v1.1.1', '', False)
+            check('push', 'refs/tags/v1.1.2', '', False)
 
 
 if __name__ == '__main__':

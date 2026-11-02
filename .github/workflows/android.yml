@@ -48,7 +48,7 @@ jobs:
           python3 tools/sync_public_content.py --check
           python3 -m unittest discover -s tests -v 2>&1 | tee build/reports/python-tests.txt
       - name: Tests, strict lint and debug build
-        run: ./gradlew :core:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --no-daemon --rerun-tasks --console=plain
+        run: ./gradlew :core:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --dependency-verification strict --no-daemon --rerun-tasks --console=plain
       - name: Exercise native callbacks, expiry and contact consent
         run: |
           sdkmanager 'emulator' 'system-images;android-35;google_apis;x86_64'
@@ -61,8 +61,9 @@ jobs:
           emulator_pid=$!
           trap 'adb -s emulator-5554 emu kill || true; kill "$emulator_pid" 2>/dev/null || true' EXIT
           timeout 180 bash -c 'until [ "$(adb -s emulator-5554 shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")" = "1" ]; do sleep 2; done'
-          ./gradlew :app:assembleDebugAndroidTest --no-daemon --no-parallel --max-workers=1 --console=plain
+          ./gradlew :app:assembleDebugAndroidTest --dependency-verification strict --no-daemon --no-parallel --max-workers=1 --console=plain
           python3 tools/run_device_checks.py --serial emulator-5554 | tee build/reports/device-tests.txt
+          python3 tools/verify_window_policy.py --serial emulator-5554 | tee build/reports/window-policy.txt
       - name: Validate debug artifact
         run: python3 tools/verify_apk.py debug
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -155,7 +156,7 @@ jobs:
               sys.exit('Could not prepare the supplied signing keystore.')
           PY
           unset ANDROID_RELEASE_KEYSTORE_BASE64
-          ./gradlew :core:test :app:testReleaseUnitTest :app:lintRelease :app:assembleRelease --no-daemon --rerun-tasks --console=plain
+          ./gradlew :core:test :app:testReleaseUnitTest :app:lintRelease :app:assembleRelease --dependency-verification strict --no-daemon --rerun-tasks --console=plain
       - name: Always remove temporary signing file
         if: always()
         run: rm -f -- "$RUNNER_TEMP/btc-tag-checker-release.jks"

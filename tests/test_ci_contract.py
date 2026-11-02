@@ -7,6 +7,19 @@ import tempfile
 import textwrap
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 class CiContract(unittest.TestCase):
+ def test_window_policy_runs_in_hosted_emulator_after_install(self):
+  text=(ROOT/'.github/workflows/android.yml').read_text()
+  block=text.split('      - name: Exercise native callbacks, expiry and contact consent\n',1)[1].split('      - name:',1)[0]
+  command='python3 tools/verify_window_policy.py --serial emulator-5554'
+  self.assertIn(command,block)
+  self.assertLess(block.index('python3 tools/run_device_checks.py'),block.index(command))
+  self.assertIn('tee build/reports/window-policy.txt',block)
+ def test_every_gradle_gate_is_explicitly_strict(self):
+  text=(ROOT/'.github/workflows/android.yml').read_text()
+  for line in text.splitlines():
+   if './gradlew ' in line:
+    self.assertIn('--dependency-verification strict',line)
+
  def test_avd_creation_and_emulator_share_explicit_home(self):
   text=(ROOT/'.github/workflows/android.yml').read_text()
   block=text.split('      - name: Exercise native callbacks, expiry and contact consent\n',1)[1].split('      - name:',1)[0]
@@ -114,5 +127,5 @@ class CiContract(unittest.TestCase):
   self.assertIn("resValue 'string', 'app_name', 'btc4fun (Debug)'",text)
   self.assertIn('btc4fun-${variant.buildType.name}.apk',text)
   self.assertIn('ANDROID_RELEASE_STORE_PASSWORD',text)
-  self.assertIn("versionCode 7; versionName '1.1.1'",text)
+  self.assertIn("versionCode 8; versionName '1.1.2'",text)
 if __name__=='__main__':unittest.main()
