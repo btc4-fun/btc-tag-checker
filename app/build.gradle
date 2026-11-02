@@ -3,6 +3,7 @@ def signingValues = ['ANDROID_RELEASE_KEYSTORE', 'ANDROID_RELEASE_STORE_PASSWORD
 def releaseReady = signingValues.values().every { it != null && !it.trim().isEmpty() } && file(signingValues.ANDROID_RELEASE_KEYSTORE ?: '__absent__').isFile()
 android {
     namespace 'com.saebm.btcnfccustomer'
+    buildFeatures { buildConfig true }
     compileSdk 35
     buildToolsVersion '36.0.0'
     defaultConfig { applicationId 'com.saebm.btcnfccustomer'; minSdk 26; targetSdk 35; versionCode 7; versionName '1.1.1'; testInstrumentationRunner 'com.saebm.btcnfccustomer.VisualInstrumentation' }

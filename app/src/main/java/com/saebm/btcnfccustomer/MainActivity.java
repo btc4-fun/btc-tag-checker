@@ -71,6 +71,7 @@ public final class MainActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        if (!BuildConfig.DEBUG) getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
         nfc = NfcAdapter.getDefaultAdapter(this);
         showInquiry();
     }

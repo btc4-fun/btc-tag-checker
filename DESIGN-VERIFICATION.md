@@ -1,5 +1,15 @@
 # Website-matched native design
 
+## حفاظت تصویری انتشار
+
+نسخهٔ انتشار از ثبت تصویر و نمایش در سطح ناامن جلوگیری می‌کند. فقط نسخهٔ آزمایشی با شناسهٔ بستهٔ جداگانه برای اثبات تصویری رابط از این کنترل مستثناست. این استثنا مجوز استفاده از دادهٔ واقعی یا محرمانه در نسخهٔ آزمایشی نیست. قواعد پشتیبان‌گیری ابری و انتقال دستگاه، همهٔ حوزه‌های دادهٔ برنامه را حذف می‌کنند.
+
+```text
+FLAG_SECURE
+BuildConfig.DEBUG
+```
+
+
 This is the historical code 2 / 0.1.1 design evidence, not a claim about the latest artifact. Current identity, artifact and checks are in `VERIFICATION.md`.
 
 The customer app follows the existing public website, not a separate Material visual system:
