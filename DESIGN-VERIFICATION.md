@@ -2,7 +2,7 @@
 
 ## حفاظت تصویری انتشار
 
-نسخهٔ انتشار از ثبت تصویر و نمایش در سطح ناامن جلوگیری می‌کند. فقط نسخهٔ آزمایشی با شناسهٔ بستهٔ جداگانه برای اثبات تصویری رابط از این کنترل مستثناست. این استثنا مجوز استفاده از دادهٔ واقعی یا محرمانه در نسخهٔ آزمایشی نیست. قواعد پشتیبان‌گیری ابری و انتقال دستگاه، همهٔ حوزه‌های دادهٔ برنامه را حذف می‌کنند.
+نسخهٔ انتشار از ثبت تصویر و نمایش در سطح ناامن جلوگیری می‌کند. فقط نسخهٔ آزمایشی با شناسهٔ بستهٔ جداگانه برای اثبات تصویری رابط از این کنترل مستثناست. این استثنا مجوز استفاده از دادهٔ واقعی یا محرمانه در نسخهٔ آزمایشی نیست. قواعد پشتیبان‌گیری ابری و انتقال دستگاه، فقط حوزه‌های فهرست‌شدهٔ ریشه، پایگاه داده، ترجیحات مشترک، فایل و فضای خارجی را مستثنا می‌کنند؛ این ادعا شامل حوزه‌های ذخیره‌سازی محافظت‌شدهٔ دستگاه نیست.
 
 ```text
 FLAG_SECURE
@@ -22,6 +22,14 @@ The customer app follows the existing public website, not a separate Material vi
 - native buttons, text, and dialogs explicitly receive Sahel; Persian paragraphs and LTR numbers/addresses remain separate.
 
 The website reference files were read-only. Public content snapshots, request transport, NFC callbacks, generation fences, consent gates, and release signing configuration remain unchanged. Only version identity advances to code 2 / 0.1.1. Debug retains its separate package and test-only suffix.
+
+## آزمون اجرایی سیاست پنجره
+
+پس از ساخت و نصب بستهٔ آزمایشی و بستهٔ آزمون روی شبیه‌ساز، فرمان زیر پرچم واقعی پنجره و اتصال سیاست به شروع فعالیت را بررسی می‌کند. سیاست انتشار با ورودی صریح روی پنجرهٔ واقعی آزموده می‌شود؛ این شاهد، ساخت یا اجرای بستهٔ انتشار نیست. کنترل امضا و گیت بررسی وابستگی انتشار همچنان مستقل و باز هستند.
+
+```sh
+python3 tools/verify_window_policy.py --serial emulator-5580
+```
 
 ## Font provenance
 

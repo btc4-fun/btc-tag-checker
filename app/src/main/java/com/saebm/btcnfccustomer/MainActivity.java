@@ -69,9 +69,14 @@ public final class MainActivity extends Activity {
     private java.util.function.Supplier<MarketClient> marketFactory = () -> new MarketClient(marketClock);
     private long marketRetryUntil;
 
+    static void applyWindowPolicy(android.view.Window window, boolean debug) {
+        if (debug) window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+        else window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+    }
+
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
-        if (!BuildConfig.DEBUG) getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+        applyWindowPolicy(getWindow(), BuildConfig.DEBUG);
         nfc = NfcAdapter.getDefaultAdapter(this);
         showInquiry();
     }
