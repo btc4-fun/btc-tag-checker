@@ -15,6 +15,9 @@ public final class Response {
    if (!text(root,"history_scope",32).equals("confirmed_only") || !text(root,"mempool_scope",32).equals("balance_only") || !text(root,"consistency",32).equals("non_atomic")) throw new IllegalArgumentException();
    Response p = new Response();
    p.serial=text(root,"serial",128); p.address=text(root,"address",128); p.source=text(root,"source",128); p.fetchedAt=text(root,"fetched_at",64);
+   if (!BitcoinAddress.isValid(p.address) || !p.serial.matches(
+       "(?=[A-Za-z0-9][A-Za-z0-9_\\-]{0,63}$)[A-Za-z0-9_\\-]*"
+       + "[0-9]{2}[0-9ab][0-9a-u][0-9a-mz](?:[0-5][0-9][0-5][0-9]|[0-9a-zA-X]{2})[0-9a-z]+")) throw new IllegalArgumentException();
    java.time.Instant.parse(p.fetchedAt);
    p.confirmedSats=integer(root,"confirmed_sats"); p.pendingDeltaSats=integer(root,"pending_delta_sats");
    if(p.confirmedSats<0) throw new IllegalArgumentException();
