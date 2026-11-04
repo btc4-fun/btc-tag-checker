@@ -230,6 +230,7 @@ public final class MainActivity extends Activity {
         text(scanSection, "NFC", true).setTextColor(color(R.color.muted));
         scan = button(scanSection, "خواندن برچسب", this::beginScan, true);
         request = button(scanSection, "۲. دیدن موجودی و تراکنش‌ها", () -> confirmRequest(null), false);
+        request.setTag("request-button");
         status = text(scanSection, "هنوز برچسبی خوانده نشده است.", false);
         status.setTextSize(13); status.setTextColor(color(R.color.muted));
         status.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
@@ -434,13 +435,14 @@ public final class MainActivity extends Activity {
             for (int i=0; i<keys.length; i++) {
                 String url = links.get(keys[i]).getAsString();
                 text(content, url, true);
-                button(labels[i], () -> openContact(url));
+                Button contact = button(labels[i], () -> openContact(url));
+                contact.setTag("contact-" + keys[i]);
             }
         } catch (Exception ex) { text(content, "نشانی‌های ارتباط باز نشدند. لطفاً سایت را بررسی کنید.", false); }
     }
     private void openContact(String url) {
         // Only bundled public destinations, never user or tag-derived URI components.
-        if (!url.matches("mailto:[A-Za-z0-9_.+-]+@btc4\\.fun|https://btc4\\.fun/(?:contact)?|https://t\\.me/[A-Za-z0-9_]+|https://www\\.instagram\\.com/[A-Za-z0-9_.]+/|https://x\\.com/[A-Za-z0-9_]+")) return;
+        if (!url.matches("mailto:[A-Za-z0-9_.+-]+@btc4\\.fun|https://btc\\.saeb\\.id\\.ir/(?:contact)?|https://t\\.me/[A-Za-z0-9_]+|https://www\\.instagram\\.com/[A-Za-z0-9_.]+/|https://x\\.com/[A-Za-z0-9_]+")) return;
         consent = new AlertDialog.Builder(this).setTitle("باز کردن راه ارتباط")
             .setMessage("برنامهٔ ایمیل یا مرورگر باز می‌شود. مقصد اطلاعات اتصال شما را می‌بیند. شمارهٔ برچسب و اطلاعات کیف پول ارسال نمی‌شوند. هیچ راز کیف پولی نفرستید.")
             .setNegativeButton("لغو", (d,w) -> consent=null)

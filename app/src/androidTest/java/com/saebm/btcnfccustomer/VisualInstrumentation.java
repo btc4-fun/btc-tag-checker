@@ -157,7 +157,10 @@ public final class VisualInstrumentation extends Instrumentation {
                     check(location[1]+content.getPaddingTop()>=safe.top+24*density,"header below safe inset with breathing room");
                     check(tagged("brand-mark")!=null,"website Bitcoin mark missing");
                     check(tagged("scan-section")!=null && tagged("result-section")!=null && tagged("public-section")!=null,"section hierarchy missing");
-                    check(!((Button)field("request")).isEnabled(),"no request without scanned UID");
+                    Button requestButton=(Button)tagged("request-button");
+                    check(requestButton!=null,"request button semantic locator missing");
+                    check(requestButton.getText().toString().equals("۲. دیدن موجودی و تراکنش‌ها"),"request button label matches visible numbered contract");
+                    check(!requestButton.isEnabled(),"no request without scanned UID");
                     check(field("client")==null,"opening screen must not create network client");
                     verifyFonts(content);
                     invoke("showPublic",new Class<?>[]{String.class,String.class},"payment","اطلاعات پرداخت");

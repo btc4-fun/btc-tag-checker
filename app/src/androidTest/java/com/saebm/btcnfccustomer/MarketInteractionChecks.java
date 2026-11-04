@@ -105,17 +105,18 @@ final class MarketInteractionChecks {
         };
         test.addMonitor(monitor);
         try {
-            for(String[] item:new String[][]{{"ایمیل","mailto:09113458375@btc4.fun",Intent.ACTION_SENDTO},{"فرم پرسش عمومی در سایت","https://btc4.fun/contact",Intent.ACTION_VIEW}}) {
+            for(String[] item:new String[][]{{"ایمیل","mailto:09113458375@btc4.fun",Intent.ACTION_SENDTO},{"فرم پرسش عمومی در سایت","https://btc.saeb.id.ir/contact",Intent.ACTION_VIEW}}) {
                 launched.set(null);
-                ui(()->{invoke("showContact");clickLabel(activity.getWindow().getDecorView(),item[0]);check(launched.get()==null,"no launch before consent");((AlertDialog)field("consent")).getButton(AlertDialog.BUTTON_NEGATIVE).performClick();check(launched.get()==null,"no launch on cancel");clickLabel(activity.getWindow().getDecorView(),item[0]);((AlertDialog)field("consent")).getButton(AlertDialog.BUTTON_POSITIVE).performClick();});
+                String contactTag=item[0].equals("ایمیل")?"contact-email":"contact-form";
+                ui(()->{invoke("showContact");check(clickTag(activity.getWindow().getDecorView(),contactTag),"contact semantic locator exists: "+contactTag);check(launched.get()==null,"no launch before consent");AlertDialog first=(AlertDialog)field("consent");check(first!=null&&first.isShowing(),"contact consent shown");first.getButton(AlertDialog.BUTTON_NEGATIVE).performClick();check(launched.get()==null,"no launch on cancel");check(clickTag(activity.getWindow().getDecorView(),contactTag),"contact semantic locator remains valid: "+contactTag);AlertDialog second=(AlertDialog)field("consent");check(second!=null&&second.isShowing(),"contact consent shown again");second.getButton(AlertDialog.BUTTON_POSITIVE).performClick();});
                 test.waitForIdleSync();
                 check(launched.get()!=null,"consent launches destination: "+item[0]+" monitor hits="+monitor.getHits());check(item[1].equals(launched.get().getDataString()),"exact public URI no private data");check(item[2].equals(launched.get().getAction()),"correct email/browser action");
             }
         } finally {test.removeMonitor(monitor);}
     }
-    private boolean clickLabel(View v,String label) {
-        if(v instanceof Button&&((Button)v).getText().toString().equals(label)){v.performClick();return true;}
-        if(v instanceof ViewGroup) for(int i=0;i<((ViewGroup)v).getChildCount();i++) if(clickLabel(((ViewGroup)v).getChildAt(i),label)) return true;
+    private boolean clickTag(View v,String tag) {
+        if(tag.equals(v.getTag())){v.performClick();return true;}
+        if(v instanceof ViewGroup) for(int i=0;i<((ViewGroup)v).getChildCount();i++) if(clickTag(((ViewGroup)v).getChildAt(i),tag)) return true;
         return false;
     }
 }
