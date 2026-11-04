@@ -10,18 +10,16 @@ class CustomerCopy(unittest.TestCase):
     def test_scan_explains_the_action_and_requires_separate_permission(self):
         source = SOURCE.read_text()
         for phrase in [
-            'برچسب همان تراشهٔ کوچک روی پاکت است.',
-            'خواندن برچسب یعنی نزدیک کردن پشت گوشی به آن.',
+            'اگر تازه شروع کرده‌اید، از همین‌جا خواندن برچسب را شروع کنید.',
+            'تراشهٔ کوچک روی پاکت را با پشت گوشی لمس کنید.',
             'چیزی روی برچسب نوشته یا خودکار ارسال نمی‌شود.',
-            'دیدن موجودی و تراکنش‌ها',
+            '۲. دیدن موجودی و تراکنش‌ها',
             'اجازه می‌دهید؟',
             'فقط همین بار ارسال کن',
             'برنامه خودکار بررسی یا دوباره تلاش نمی‌کند.',
-            'سایت آدرس عمومی کیف پول را به بلاک‌استریم می‌فرستد.',
-            'این سرویس آدرس و درخواست سایت را می‌بیند.',
+            'سایت آدرس عمومی را برای دریافت اطلاعات به بلاک‌استریم می‌فرستد.',
             'کلید خصوصی و کلمات بازیابی ارسال نمی‌شوند.',
-            'این نتیجه اصل بودن پاکت یا مالکیت شما را ثابت نمی‌کند.',
-            'تضمین نمی‌کند که فقط شما به پول دسترسی دارید.',
+            'این بررسی خصوصی نیست و اصل بودن یا مالکیت را ثابت نمی‌کند.',
         ]:
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, source)
@@ -45,6 +43,12 @@ class CustomerCopy(unittest.TestCase):
         for jargon in ['استعلام', 'اتمی', 'مبدأ یونیکس', 'استنباط', 'نشانگر صفحه']:
             with self.subTest(jargon=jargon):
                 self.assertNotIn(jargon, source)
+
+    def test_public_reference_uses_site_without_changing_api_contract(self):
+        source = SOURCE.read_text()
+        self.assertIn('https://btc.saeb.id.ir/', source)
+        self.assertIn('PUBLIC_SITE + page', source)
+        self.assertIn('https://btc4.fun/api', (ROOT / 'core/src/main/java/com/saebm/btcnfccustomer/core/RequestPolicy.java').read_text())
 
 
 if __name__ == '__main__':

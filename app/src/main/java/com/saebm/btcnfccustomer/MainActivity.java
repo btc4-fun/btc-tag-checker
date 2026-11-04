@@ -40,6 +40,7 @@ import java.util.concurrent.Future;
 /** Read-only NFC inquiry. All financial data stays in memory and never enters saved state. */
 @SuppressLint("SetTextI18n")
 public final class MainActivity extends Activity {
+    private static final String PUBLIC_SITE = "https://btc.saeb.id.ir/";
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Latest gate = new Latest();
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
@@ -162,7 +163,7 @@ public final class MainActivity extends Activity {
         brand.addView(name, nameParams);
         TextView brandName = text(name, "بیت‌کوین برای سرگرمی", false);
         brandName.setTextSize(18); brandName.setPadding(0, 0, 0, 0); bold(brandName);
-        TextView subtitle = text(name, "btc4fun · btc4.fun", true);
+        TextView subtitle = text(name, "btc4fun · btc.saeb.id.ir", true);
         subtitle.setTextSize(12); subtitle.setTextColor(color(R.color.muted));
         subtitle.setGravity(Gravity.END); subtitle.setPadding(0, dp(2), 0, 0);
         divider(content);
@@ -220,15 +221,15 @@ public final class MainActivity extends Activity {
     }
     private void showInquiry() {
         cancelRequest(); stopReading(); inquiry = true; uid = null; cursor = null; cursors.clear();
-        screen("موجودی پاکت");
-        TextView deck = text(content, "اول برچسب پاکت را بخوانید. بعد، با اجازهٔ شما موجودی و تراکنش‌ها از اینترنت دریافت می‌شود.", false);
+        screen("بررسی پاکت");
+        TextView deck = text(content, "اگر تازه شروع کرده‌اید، از همین‌جا خواندن برچسب را شروع کنید. بعد، با اجازهٔ شما اطلاعات عمومی از اینترنت دریافت می‌شود.", false);
         deck.setTextColor(color(R.color.muted));
-        LinearLayout scanSection = section("scan-section", "خواندن برچسب", false);
-        text(scanSection, "برچسب همان تراشهٔ کوچک روی پاکت است. خواندن برچسب یعنی نزدیک کردن پشت گوشی به آن. فقط شمارهٔ شناسایی برچسب خوانده می‌شود. چیزی روی برچسب نوشته یا خودکار ارسال نمی‌شود.", false).setTextColor(color(R.color.muted));
-        text(scanSection, "نام گزینهٔ ارتباط نزدیک در تنظیمات گوشی:", false).setTextColor(color(R.color.muted));
+        LinearLayout scanSection = section("scan-section", "۱. خواندن برچسب", true);
+        text(scanSection, "تراشهٔ کوچک روی پاکت را با پشت گوشی لمس کنید. فقط شناسه خوانده می‌شود؛ چیزی روی برچسب نوشته یا خودکار ارسال نمی‌شود.", false).setTextColor(color(R.color.muted));
+        text(scanSection, "اگر دکمه خاموش بود، ارتباط نزدیک را در تنظیمات گوشی روشن کنید. نام این گزینه:", false).setTextColor(color(R.color.muted));
         text(scanSection, "NFC", true).setTextColor(color(R.color.muted));
         scan = button(scanSection, "خواندن برچسب", this::beginScan, true);
-        request = button(scanSection, "دیدن موجودی و تراکنش‌ها", () -> confirmRequest(null), false);
+        request = button(scanSection, "۲. دیدن موجودی و تراکنش‌ها", () -> confirmRequest(null), false);
         status = text(scanSection, "هنوز برچسبی خوانده نشده است.", false);
         status.setTextSize(13); status.setTextColor(color(R.color.muted));
         status.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
@@ -236,12 +237,15 @@ public final class MainActivity extends Activity {
         result = new LinearLayout(this); result.setOrientation(LinearLayout.VERTICAL); resultSection.addView(result);
         text(result, "هنوز نتیجه‌ای دریافت نشده است.", false).setTextColor(color(R.color.muted));
         next = button(resultSection, "دیدن تراکنش‌های بیشتر", () -> confirmRequest(cursor), false);
-        LinearLayout safety = section("privacy-section", "قبل از دیدن موجودی", false);
-        text(safety, "کلید خصوصی یا کلمات بازیابی را هرگز اینجا وارد نکنید. شمارهٔ برچسب را می‌توان کپی کرد. این نتیجه اصل بودن پاکت یا مالکیت شما را ثابت نمی‌کند. تضمین نمی‌کند که فقط شما به پول دسترسی دارید.", false);
-        text(safety, "فقط با اجازهٔ شما، شمارهٔ برچسب به سایت فرستاده می‌شود. سایت آدرس عمومی کیف پول را به بلاک‌استریم می‌فرستد. این سرویس آدرس و درخواست سایت را می‌بیند. برنامه خودکار بررسی یا دوباره تلاش نمی‌کند.", false).setTextColor(color(R.color.muted));
+        LinearLayout safety = section("privacy-section", "پیش از دریافت", false);
+        text(safety, "کلید خصوصی و کلمات بازیابی ارسال نمی‌شوند. شناسهٔ برچسب را می‌توان کپی کرد؛ فقط با اجازهٔ شما فرستاده می‌شود. این بررسی خصوصی نیست و اصل بودن یا مالکیت را ثابت نمی‌کند.", false);
+        text(safety, "دیدن موجودی یا شناسهٔ برچسب تضمین نمی‌کند که فقط شما به پول دسترسی دارید.", false);
+        text(safety, "برنامه خودکار بررسی یا دوباره تلاش نمی‌کند. سایت آدرس عمومی را برای دریافت اطلاعات به بلاک‌استریم می‌فرستد.", false).setTextColor(color(R.color.muted));
         text(safety, "btc4.fun → Blockstream", true).setTextColor(color(R.color.accent));
         LinearLayout links = section("public-section", "راهنماهای پاکت", false);
-        text(links, "راهنماهای زیر بدون اینترنت باز می‌شوند.", false).setTextColor(color(R.color.muted));
+        text(links, "راهنماهای زیر بدون اینترنت باز می‌شوند. نسخهٔ تازه در سایت است:", false).setTextColor(color(R.color.muted));
+        text(links, "btc.saeb.id.ir", true).setTextColor(color(R.color.accent));
+        button(links, "باز کردن سایت راهنما", () -> openPublic(""), true);
         button(links, "راهنمای پاکت", () -> showPublic("guide", "راهنمای پاکت"), false);
         button(links, "شرایط و مسئولیت‌ها", () -> showPublic("terms", "شرایط و مسئولیت‌ها"), false);
         button(links, "اطلاعات پرداخت", () -> showPublic("payment", "اطلاعات پرداخت"), false);
@@ -588,11 +592,11 @@ public final class MainActivity extends Activity {
         for(int i=0;i<fields.length;i++) if(!row.get(fields[i]).isJsonNull()) {text(parent,labels[i],false);text(parent,row.get(fields[i]).getAsString(),true);}
     }
     private void openPublic(String page) {
-        if (!Arrays.asList("guide", "terms", "costs", "security").contains(page)) return;
+        if (!page.isEmpty() && !Arrays.asList("guide", "terms", "costs", "security").contains(page)) return;
         AlertDialog external = new AlertDialog.Builder(this).setTitle("باز کردن سایت")
             .setMessage("این صفحه در مرورگر گوشی باز می‌شود و اینترنت لازم دارد. سایت اطلاعات اتصال شما را می‌بیند. شمارهٔ برچسب و آدرس کیف پول به لینک اضافه نمی‌شوند.")
             .setNegativeButton("لغو", null).setPositiveButton("باز کردن", (dialog, which) -> {
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://btc4.fun/" + page));
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(PUBLIC_SITE + page));
                 intent.addCategory(Intent.CATEGORY_BROWSABLE);
                 try { startActivity(intent); } catch (ActivityNotFoundException ex) {
                     AlertDialog missing = new AlertDialog.Builder(this).setMessage("مرورگری برای باز کردن سایت پیدا نشد.").setPositiveButton("بستن", null).show();

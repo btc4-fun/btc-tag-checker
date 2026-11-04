@@ -30,6 +30,6 @@ class AppContract(unittest.TestCase):
   payment=(assets/'payment.txt').read_text()
   for value in ['6219861819062158','930560611828006181828601','صائب ملایی']:
    self.assertIn(value,payment)
-  self.assertIn('https://btc4.fun/costs',(assets/'costs.txt').read_text())
+  self.assertIn('https://btc.saeb.id.ir/costs',(assets/'costs.txt').read_text())
   self.assertTrue((assets/'manifest.json').is_file())
 if __name__=='__main__':unittest.main()
