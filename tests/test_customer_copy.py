@@ -44,6 +44,37 @@ class CustomerCopy(unittest.TestCase):
             with self.subTest(jargon=jargon):
                 self.assertNotIn(jargon, source)
 
+    def test_manual_lookup_explains_source_consent_and_never_fakes_a_balance(self):
+        source = SOURCE.read_text()
+        for phrase in [
+            'استعلام با شمارهٔ سریال',
+            'استعلام با آدرس عمومی',
+            'شمارهٔ سریال چاپ‌شده روی پاکت',
+            'آدرس عمومی بیت‌کوین',
+            'همین ',
+            'فقط همین بار ارسال کن',
+            # Failure copy: each must be present verbatim, and never a zero.
+            'ورودی معتبر نیست',
+            'سریالی با این شماره پیدا نشد',
+            'آدرس عمومی نامعتبر است؛ این آدرس در پایگاه‌داده ما ثبت نشده است.',
+            'سایت فعلاً موجودی را نمی‌دهد. این پیام به معنی صفر نیست.',
+            'سایت فعلاً اطلاعات نمی‌دهد',
+            'پاسخ نرسید یا دیر شد',
+        ]:
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, source)
+
+    def test_optional_public_fields_are_named_and_never_loaded_in_app(self):
+        source = SOURCE.read_text()
+        for phrase in [
+            'یادداشت عمومی فروشنده',
+            'باز کردن سایت فروشنده',
+            'باز کردن تصویر پاکت',
+            'نشانی تصویر پاکت',
+        ]:
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, source)
+
     def test_public_reference_uses_site_without_changing_api_contract(self):
         source = SOURCE.read_text()
         self.assertIn('https://btc.saeb.id.ir/', source)

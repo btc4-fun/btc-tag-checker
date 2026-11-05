@@ -11,6 +11,22 @@ public class RequestPolicyTest {
   for(String uid : new String[]{"00017f80", " 00017F80", "00017F80/", "0011", "", "00017F80?x=y"}) assertThrows(IllegalArgumentException.class, () -> RequestPolicy.url(uid,null));
   assertThrows(IllegalArgumentException.class, () -> RequestPolicy.url("00017F80","../"));
  }
+ @Test public void serialAndAddressUrlsStayOnTheFixedOrigin() throws Exception {
+  assertEquals("https://btc4.fun/api/wallets/26b1z00001?balance=1", RequestPolicy.walletUrl("26b1z00001", true).toString());
+  assertEquals("https://btc4.fun/api/wallets/26b1z00001", RequestPolicy.walletUrl("26b1z00001", false).toString());
+  String address = "bc1qqqqsyqcyq5rqwzqfpg9scrgwpugpzysn4v0345";
+  assertEquals("https://btc4.fun/api/addresses/" + address + "?balance=1", RequestPolicy.addressUrl(address, true).toString());
+  assertEquals("https://btc4.fun/api/addresses/" + address, RequestPolicy.addressUrl(address, false).toString());
+  // The site's own shape admits any prefix, so a raw UID like 00017F80 is a legal serial there too.
+  assertTrue(RequestPolicy.validSerial("00017F80"));
+  for (String serial : new String[]{"", "TEST-ONLY", "26b1z00001/", " 26b1z00001", "26b1z00001?balance=1", "../", "x".repeat(65)}) {
+   assertThrows(IllegalArgumentException.class, () -> RequestPolicy.walletUrl(serial, true));
+   assertFalse(RequestPolicy.validSerial(serial));
+  }
+  for (String bad : new String[]{"", "bc1qtestonly", "bc1qzmtrqsfuaf6l6kkcsseumq26ukaphfj9skkug6", address + "/"}) {
+   assertThrows(IllegalArgumentException.class, () -> RequestPolicy.addressUrl(bad, true));
+  }
+ }
  @Test public void rawUidLengthsAreNotNormalized() {
   for(int length : new int[]{0,1,3,5,6,8,9,11}) assertThrows(IllegalArgumentException.class, () -> Uid.format(new byte[length]));
   assertThrows(IllegalArgumentException.class, () -> Uid.format(null));

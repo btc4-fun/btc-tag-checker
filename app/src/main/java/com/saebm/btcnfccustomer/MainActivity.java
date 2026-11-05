@@ -11,7 +11,8 @@ import android.content.pm.PackageManager;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 import com.saebm.btcnfccustomer.core.QrPayload;
-import com.saebm.btcnfccustomer.core.AddressClient;
+import com.saebm.btcnfccustomer.core.BitcoinAddress;
+import com.saebm.btcnfccustomer.core.LookupClient;
 import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.os.Handler;
@@ -63,6 +64,12 @@ public final class MainActivity extends Activity {
     private Runnable countdown;
     private AlertDialog consent;
     private final Latest marketGate = new Latest();
+    private final Latest lookupGate = new Latest();
+    private LookupClient lookupClient;
+    /** Which field the in-flight lookup came from, so a 404 names the right source. */
+    private boolean lookupFromSerial;
+    private EditText serialInput, addressInput;
+    private Button serialSubmit, addressSubmit;
     private MarketClient marketClient;
     private MarketResponse market;
     private boolean costsPage, includeTag, budgetMode;
@@ -246,6 +253,16 @@ public final class MainActivity extends Activity {
         result = new LinearLayout(this); result.setOrientation(LinearLayout.VERTICAL); resultSection.addView(result);
         text(result, "هنوز نتیجه‌ای دریافت نشده است.", false).setTextColor(color(R.color.muted));
         next = button(resultSection, "دیدن تراکنش‌های بیشتر", () -> confirmRequest(cursor), false);
+        LinearLayout lookup = section("lookup-section", "استعلام بدون برچسب", true);
+        text(lookup, "اگر پاکت را در دست دارید، می‌توانید شمارهٔ سریال چاپ‌شده یا آدرس عمومی روی آن را خودتان وارد کنید. فقط همین یک مقدار به سایت فرستاده می‌شود و موجودی آن کیف پول را نشان می‌دهد. چیزی خودکار ارسال نمی‌شود.", false).setTextColor(color(R.color.muted));
+        text(lookup, "شمارهٔ سریال چاپ‌شده روی پاکت", false);
+        serialInput = input(lookup, "serial-input", "مثلاً 26b1z00001");
+        serialSubmit = button(lookup, "استعلام با شمارهٔ سریال", () -> submitLookup(true), false);
+        serialSubmit.setTag("serial-submit");
+        text(lookup, "آدرس عمومی بیت‌کوین", false);
+        addressInput = input(lookup, "address-input", "bc1…");
+        addressSubmit = button(lookup, "استعلام با آدرس عمومی", () -> submitLookup(false), false);
+        addressSubmit.setTag("address-submit");
         LinearLayout safety = section("privacy-section", "پیش از دریافت", false);
         text(safety, "کلید خصوصی و کلمات بازیابی ارسال نمی‌شوند. شناسهٔ برچسب را می‌توان کپی کرد؛ فقط با اجازهٔ شما فرستاده می‌شود. این بررسی خصوصی نیست و اصل بودن یا مالکیت را ثابت نمی‌کند.", false);
         text(safety, "دیدن موجودی یا شناسهٔ برچسب تضمین نمی‌کند که فقط شما به پول دسترسی دارید.", false);
@@ -274,11 +291,29 @@ public final class MainActivity extends Activity {
         footer.setTextSize(12); footer.setTextColor(color(R.color.muted)); footer.setPadding(0, dp(32), 0, 0);
         updateButtons();
     }
+    /** One-line LTR field; serial and address are Latin-only, so no RTL mixing can occur. */
+    private EditText input(LinearLayout parent, String tag, String hint) {
+        EditText field = new EditText(this);
+        field.setTag(tag); field.setHint(hint);
+        field.setTextDirection(View.TEXT_DIRECTION_LTR); field.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+        field.setGravity(Gravity.START); field.setSingleLine(true);
+        field.setTextSize(15); field.setSaveEnabled(false);
+        field.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        field.setTypeface(getResources().getFont(R.font.sahel_regular));
+        field.setTextColor(color(R.color.ink)); field.setHintTextColor(color(R.color.muted));
+        field.setBackground(surface(R.color.paper, R.color.line));
+        field.setPadding(dp(12), dp(10), dp(12), dp(10));
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2); params.topMargin = dp(8);
+        parent.addView(field, params);
+        return field;
+    }
     private void updateButtons() {
         if (!inquiry || scan == null) return;
         scan.setEnabled(active && !busy && nfc != null && nfc.isEnabled());
         request.setEnabled(active && uid != null && !busy && !scanning);
         next.setEnabled(active && uid != null && cursor != null && !busy && !scanning);
+        if (serialSubmit != null) serialSubmit.setEnabled(active && !busy && !scanning);
+        if (addressSubmit != null) addressSubmit.setEnabled(active && !busy && !scanning);
     }
     private void beginScan() {
         cancelRequest(); uid = null; cursor = null; cursors.clear(); result.removeAllViews();
@@ -345,13 +380,120 @@ public final class MainActivity extends Activity {
     }
     private void confirmQrAddress() {
         if (qrAddress == null) return;
-        new AlertDialog.Builder(this).setTitle("استعلام عمومی آدرس")
-            .setMessage("این آدرس عمومی به سایت ارسال می‌شود تا فقط نگاشت عمومی آدرس و شمارهٔ سریال دریافت شود. موجودی، تراکنش یا اطلاعات مشتری درخواست نمی‌شود.")
-            .setNegativeButton("لغو", null).setPositiveButton("استعلام همین آدرس", (d,w) -> fetchQrAddress()).show();
+        confirmLookup(false, qrAddress);
     }
-    private void fetchQrAddress() {
-        final String address=qrAddress; status.setText("در حال استعلام عمومی آدرس…");
-        worker.submit(() -> { try { AddressClient.Mapping m=new AddressClient().fetch(address); main.post(() -> { if (address.equals(qrAddress)) { text(result,"آدرس عمومی",false); text(result,m.address,true); text(result,"شمارهٔ سریال عمومی",false); text(result,m.serial,true); status.setText("نگاشت عمومی دریافت شد. لینک فقط پس از تأیید شما باز می‌شود."); } }); } catch(Exception e) { main.post(() -> status.setText("استعلام عمومی دریافت نشد؛ داده‌ای نمایش داده نشد.")); } });
+    /** Reads the typed value, rejects an invalid shape before any network use, then asks for consent. */
+    private void submitLookup(boolean bySerial) {
+        EditText field = bySerial ? serialInput : addressInput;
+        if (field == null || busy || !active) return;
+        String value = field.getText().toString().trim();
+        if (bySerial ? !RequestPolicy.validSerial(value) : !BitcoinAddress.isValid(value)) {
+            status.setText(bySerial ? "شمارهٔ سریال معتبر نیست. همان شماره‌ای را وارد کنید که روی پاکت چاپ شده است." : "آدرس عمومی معتبر نیست. آدرس کامل بیت‌کوین را وارد کنید.");
+            return;
+        }
+        confirmLookup(bySerial, value);
+    }
+    /** One consent dialog naming the exact source; one request after it. Nothing fires automatically. */
+    private void confirmLookup(boolean bySerial, String value) {
+        String source = bySerial ? "شمارهٔ سریال" : "آدرس عمومی";
+        consent = new AlertDialog.Builder(this)
+            .setTitle(bySerial ? "استعلام با شمارهٔ سریال" : "استعلام با آدرس عمومی")
+            .setMessage("همین " + source + " به سایت بیت‌کوین برای سرگرمی فرستاده می‌شود تا موجودی و اطلاعات عمومی آن کیف پول دریافت شود. سایت آدرس عمومی کیف پول را به بلاک‌استریم می‌فرستد. این سرویس آدرس و درخواست سایت را می‌بیند. کلید خصوصی و کلمات بازیابی ارسال نمی‌شوند. برنامه خودکار بررسی یا دوباره تلاش نمی‌کند.")
+            .setNegativeButton("لغو", (dialog, which) -> consent = null)
+            .setPositiveButton("فقط همین بار ارسال کن", (dialog, which) -> { consent = null; fetchLookup(bySerial, value); }).create();
+        consent.show();
+        styleDialog(consent);
+    }
+    /** Single lookup path for manual entry, QR and NFC: clears the card, cancels the old call, one generation. */
+    private void fetchLookup(boolean bySerial, String value) {
+        if (!active) return;
+        cancelRequest(); result.removeAllViews();
+        final long generation = lookupGate.begin();
+        lookupFromSerial = bySerial;
+        final LookupClient transport = LookupClient.production(System::nanoTime); lookupClient = transport;
+        busy = true; status.setText("در حال استعلام از سایت… نتیجهٔ تازه هنوز نرسیده است."); updateButtons();
+        WeakReference<MainActivity> owner = new WeakReference<>(this);
+        work = worker.submit(() -> {
+            LookupClient.Lookup lookup = null; Exception error = null;
+            try { lookup = bySerial ? transport.fetchBySerial(value, true) : transport.fetchByAddress(value, true); }
+            catch (Exception ex) { error = ex; }
+            LookupClient.Lookup delivered = lookup; Exception failed = error;
+            new Handler(Looper.getMainLooper()).post(() -> {
+                MainActivity activity = owner.get();
+                if (activity == null || !activity.active || !activity.inquiry || !activity.lookupGate.accepts(generation)) return;
+                activity.deliverLookup(delivered, failed);
+            });
+        });
+    }
+    private void deliverLookup(LookupClient.Lookup lookup, Exception error) {
+        busy = false; lookupClient = null; work = null;
+        result.removeAllViews();
+        if (error != null) {
+            if (error instanceof LookupClient.BalanceUnavailable) {
+                // The site gave a healthy mapping but no balance: show what we have and never imply zero.
+                renderLookup(((LookupClient.BalanceUnavailable) error).lookup);
+                status.setText("سایت فعلاً موجودی را نمی‌دهد. این پیام به معنی صفر نیست.");
+            } else if (error instanceof Client.Failure) {
+                Client.Failure failure = (Client.Failure) error;
+                switch (failure.status) {
+                    case 400: status.setText("ورودی معتبر نیست"); break;
+                    case 404: status.setText(lookupFromSerial ? "سریالی با این شماره پیدا نشد" : "آدرس عمومی نامعتبر است؛ این آدرس در پایگاه‌داده ما ثبت نشده است."); break;
+                    case 429: startCountdown(failure.retrySeconds); break;
+                    case 503: status.setText("سایت فعلاً اطلاعات نمی‌دهد"); break;
+                    default: status.setText("سایت پاسخ نداد. نتیجهٔ تازه‌ای دریافت نشد.");
+                }
+            } else status.setText("پاسخ نرسید یا دیر شد");
+            updateButtons(); return;
+        }
+        renderLookup(lookup);
+        status.setText(lookup.balance.freshness.fresh(System.nanoTime() / 1_000_000L) ? "موجودی رسید." : "موجودی رسید، اما زمان آن در سایت قدیمی است. برای عدد تازه دوباره استعلام کنید.");
+        updateButtons();
+    }
+    /** Public card: mapping first, balance only if present, then the optional seller fields. */
+    private void renderLookup(LookupClient.Lookup lookup) {
+        text(result, "شمارهٔ سریال", false); text(result, lookup.serial, true);
+        text(result, "آدرس عمومی کیف پول — همهٔ حروف و عددها را با آدرس روی پاکت مقایسه کنید", false); text(result, lookup.address, true);
+        if (lookup.balance != null) {
+            text(result, "موجودی تأییدشده، به ساتوشی", false); text(result, Long.toString(lookup.balance.confirmedSats), true);
+            text(result, "تغییر موجودی در انتظار تأیید، به ساتوشی", false); text(result, Response.signed(lookup.balance.pendingDeltaSats), true);
+            text(result, "منبع اطلاعات، به گفتهٔ سایت", false); text(result, lookup.balance.source, true);
+            text(result, "زمان شروع دریافت اطلاعات در سایت", false); text(result, lookup.balance.fetchedAt, true);
+            text(result, "این زمان را سایت می‌دهد، نه منبع اطلاعات. این عدد تضمین نمی‌کند که همهٔ پول همین حالا قابل خرج کردن است.", false);
+        }
+        LookupClient.PublicInfo info = lookup.publicInfo;
+        if (info != null && !info.empty()) {
+            if (info.notes != null) { text(result, "یادداشت عمومی فروشنده", false); text(result, info.notes, false); }
+            if (info.siteKey != null) {
+                text(result, "سایت فروشنده", false); text(result, info.siteKey, true);
+                Button site = button(result, "باز کردن سایت فروشنده", () -> confirmOpen(info.siteUrl, "سایت فروشنده", "سایت فروشنده در مرورگر باز می‌شود. آن سایت اطلاعات اتصال شما را می‌بیند."), false);
+                site.setTag("site-open");
+            }
+            if (info.imageUrl != null) {
+                text(result, "نشانی تصویر پاکت", false); text(result, info.imageUrl, true);
+                Button image = button(result, "باز کردن تصویر پاکت", () -> confirmOpen(info.imageUrl, "تصویر پاکت", "تصویر پاکت در مرورگر باز می‌شود. برنامه خودش تصویر را بارگذاری نمی‌کند."), false);
+                image.setTag("image-open");
+            }
+        }
+        text(result, "صفحهٔ عمومی این کیف پول", false); text(result, lookup.lookupUrl, true);
+        Button page = button(result, "باز کردن صفحهٔ عمومی در سایت", () -> confirmOpen(lookup.lookupUrl, "صفحهٔ عمومی", "صفحهٔ عمومی این کیف پول در مرورگر باز می‌شود."), false);
+        page.setTag("lookup-open");
+        Button explorer = button(result, "باز کردن آدرس در کاوشگر بلاک‌چین", () -> confirmOpen(LookupClient.explorerUrl(lookup.address), "کاوشگر بلاک‌چین", "این آدرس در کاوشگر عمومی بلاک‌چین باز می‌شود. کاوشگر اطلاعات اتصال شما را می‌بیند."), false);
+        explorer.setTag("explorer-open");
+    }
+    /** Every external link goes through one consent dialog; nothing opens on its own. */
+    private void confirmOpen(String url, String title, String message) {
+        if (url == null) return;
+        Uri uri = Uri.parse(url);
+        if (!"https".equals(uri.getScheme()) || uri.getHost() == null) return;
+        consent = new AlertDialog.Builder(this).setTitle(title).setMessage(message)
+            .setNegativeButton("لغو", (d, w) -> consent = null)
+            .setPositiveButton("باز کردن", (d, w) -> {
+                consent = null;
+                Intent intent = new Intent(Intent.ACTION_VIEW, uri); intent.addCategory(Intent.CATEGORY_BROWSABLE);
+                try { startActivity(intent); } catch (ActivityNotFoundException ignored) { status.setText("مرورگری برای باز کردن این لینک پیدا نشد."); }
+            }).create();
+        consent.show();
+        styleDialog(consent);
     }
     private void confirmQrUrl() {
         if (qrUrl == null) return;
@@ -418,6 +560,8 @@ public final class MainActivity extends Activity {
     private void cancelRequest() {
         gate.invalidate();
         marketGate.invalidate();
+        lookupGate.invalidate();
+        if (lookupClient != null) { lookupClient.cancel(); lookupClient = null; }
         if (marketClient != null) { marketClient.cancel(); marketClient = null; }
         if (ageTick != null) { main.removeCallbacks(ageTick); ageTick = null; }
         if (marketFetch != null) marketFetch.setEnabled(true);
