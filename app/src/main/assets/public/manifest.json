@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "fetched_at": "2026-11-04T21:42:58+00:00",
-  "source_sha256": "bba01ef3deaf00521befad7b9feddb3b253df4163310a2d1c8f3536423b55c5b",
+  "fetched_at": "2026-11-05T13:44:29+00:00",
+  "source_sha256": "e79d75a0743375e24d5fa326a0173413eb51d961f57ed2d8f1393031592802a9",
   "security_source": "security.html",
   "sources": {
     "base.html": "fba1d5dcecb8177caf822858bd34e0bd1d09690604bf2860fe4aa12dbe07456d",
-    "contact.html": "11a05313bec9a420a0cce04efcf9ed50e1cb9026adc77e215307be289d80aa69",
+    "contact.html": "bbb7d3f7b6ab0e0451c013df56975de84cde357d70d34826dbbf491c2cf9a16e",
     "guide.html": "07e54088497ef8c58284ce6ce39135fe66f13605ea8289298adb7c137e0d667f",
     "terms.html": "65883fd35ca6dd684830bd05a71ea346c99f5cc37b5804d7f148f8540914b63f",
     "security.html": "643dba96c4a54c85620576b99f203ce772ea94e6eb66cdcdf77bd7807f97a1df",
@@ -14,13 +14,13 @@
     "_payment_details.html": "73759baafd8f3e8ab8491ddcf1404db3605b84f875071fb6af0c8dd56bde5da5"
   },
   "pages": {
-    "guide": "c28aff1ffaafd697180f7646ebb0fdea44dab26e70615fb498bb8e3c15bb1ff6",
-    "terms": "033e1e4014fefafb25a373a892875949c8966ed50e2eb23d8bd91397e77aeda3",
-    "payment": "c0fd61a993f875cf2c70c690a9e443fd56b04d47a284078601ce10480cc1db09",
-    "security": "0d51f95f04e708865db50be77e34cc5aad8b81386343b5a494cd03c6b09d64e4",
-    "costs": "09fedd1728f78db0fe2fa3a909b10be2f04a3a4e01bcbe34b82d923bb77c0441"
+    "guide": "75b3e3570a6689e07cb51db384e2cca04a11ff2eda7c0fda39c8d6d882cdf129",
+    "terms": "13fd58983c262d1cbff37456cd653c10c2664f63b3fdd7c6d2563f1d90d0ecc1",
+    "payment": "46a0cf51759e16998656ef1cab8db15b0c1c366be80c6713aeb4a0bd8078fcae",
+    "security": "ecd767d8851ea77139a750c5623ad1260c5b0719f6682ccf92ba0c5a630af1bf",
+    "costs": "29d76ce22d5efa7e00f6ae6b88709476fba10d5693cbcfce1b295ee1c311962f"
   },
   "images_bundled": false,
   "prices_bundled": false,
-  "contact_links_sha256": "20ec4c120adffb1497e693766d78802a3481c169c00cf0e8f3f03f00f9ea208e"
+  "contact_links_sha256": "7ecfe3ddd710c796048f61a7aa4bc42009194da0fe38d794c4ad00b0d3f5f203"
 }
