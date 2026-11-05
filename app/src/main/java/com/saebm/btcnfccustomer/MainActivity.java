@@ -643,9 +643,11 @@ public final class MainActivity extends Activity {
     }
     private void showLearnGroup() {
         innerScreen("امنیت، آموزش و شرایط");
+        // Owner order: terms first, then security, then the guide. The group
+        // explanation lives above the first control but is not focusable, so
+        // the first control a reader reaches really is the terms page.
         text(content, "همهٔ این صفحه‌ها بدون اینترنت باز می‌شوند و نسخهٔ تازه در سایت است:", false).setTextColor(color(R.color.muted));
         text(content, "btc.saeb.id.ir", true).setTextColor(color(R.color.accent));
-        // Owner order: terms first, then security, then the guide.
         pageButton("learn-terms", "terms");
         pageButton("learn-security", "security");
         pageButton("learn-guide", "guide", "آموزش؛ پاکت و بیت‌کوین چیست");
