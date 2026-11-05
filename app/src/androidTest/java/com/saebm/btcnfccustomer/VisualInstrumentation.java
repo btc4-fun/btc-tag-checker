@@ -189,16 +189,16 @@ public final class VisualInstrumentation extends Instrumentation {
                     invoke("showLearnGroup",new Class<?>[]{});
                     View learnPage=tagged("site-content"); verifyFonts(learnPage);
                     check(learnPage.getLayoutDirection()==View.LAYOUT_DIRECTION_RTL,"learn group stays RTL");
-                    // A container may report itself focusable; only the real
-                    // touch targets count, so match the tagged page buttons.
-                    List<View> focusable=new ArrayList<>();
+                    // The three page entries of the group, in source order. The
+                    // back and open-site controls are navigation, not entries.
+                    List<View> entries=new ArrayList<>();
                     for(View v:views(learnPage)) {
                         Object tag=v.getTag();
-                        boolean pageTag=tag instanceof String && ((String)tag).startsWith("learn-");
-                        if(pageTag && v.isFocusable() && v.getVisibility()==View.VISIBLE) focusable.add(v);
+                        boolean entryTag="learn-terms".equals(tag) || "learn-security".equals(tag) || "learn-guide".equals(tag);
+                        if(entryTag && v.isFocusable() && v.getVisibility()==View.VISIBLE) entries.add(v);
                     }
-                    check(focusable.size()==3,"learn group exposes exactly three page controls");
-                    check("learn-terms".equals(focusable.get(0).getTag()),"first focusable on learn group is terms");
+                    check(entries.size()==3,"learn group exposes exactly three page entries");
+                    check("learn-terms".equals(entries.get(0).getTag()),"first focusable on learn group is terms");
                     int posTerms=indexOfChild(learnPage,"learn-terms"), posSecurity=indexOfChild(learnPage,"learn-security"), posGuide=indexOfChild(learnPage,"learn-guide");
                     check(posTerms>=0 && posTerms<posSecurity && posSecurity<posGuide,"learn group order is terms, security, guide");
                     check(tagged("learn-back")!=null && tagged("learn-site")!=null,"learn group back and open-site controls present");
