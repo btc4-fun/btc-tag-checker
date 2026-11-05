@@ -13,7 +13,7 @@ class CustomerCopy(unittest.TestCase):
             'اگر تازه شروع کرده‌اید، از همین‌جا خواندن برچسب را شروع کنید.',
             'تراشهٔ کوچک روی پاکت را با پشت گوشی لمس کنید.',
             'چیزی روی برچسب نوشته یا خودکار ارسال نمی‌شود.',
-            '۲. دیدن موجودی و تراکنش‌ها',
+            'دیدن موجودی و تراکنش‌ها',
             'اجازه می‌دهید؟',
             'فقط همین بار ارسال کن',
             'برنامه خودکار بررسی یا دوباره تلاش نمی‌کند.',
@@ -74,6 +74,26 @@ class CustomerCopy(unittest.TestCase):
         ]:
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, source)
+
+    def test_home_numbering_removed_and_warnings_relocated_never_deleted(self):
+        source = SOURCE.read_text()
+        # Owner decision 5: the numbered labels are gone from the visible copy.
+        for numbered in ['۱. خواندن برچسب', '۲. دیدن موجودی و تراکنش‌ها']:
+            with self.subTest(numbered=numbered):
+                self.assertNotIn(numbered, source)
+        # Relocated home warnings: still present verbatim somewhere in the source.
+        for phrase in [
+            'این بررسی خصوصی نیست و اصل بودن یا مالکیت را ثابت نمی‌کند.',
+            'دیدن موجودی یا شناسهٔ برچسب تضمین نمی‌کند که فقط شما به پول دسترسی دارید.',
+            'برنامه خودکار بررسی یا دوباره تلاش نمی‌کند. سایت آدرس عمومی را برای دریافت اطلاعات به بلاک‌استریم می‌فرستد.',
+            'کلید خصوصی و کلمات بازیابی ارسال نمی‌شوند.',
+        ]:
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, source)
+        # The home paragraphs themselves are now short (at most two).
+        home = source[source.index('LinearLayout safety = section("privacy-section"'):source.index('LinearLayout groups = section(')]
+        self.assertLessEqual(home.count('text(safety,'), 2)
+        self.assertIn('امنیت، آموزش و شرایط', source)
 
     def test_public_reference_uses_site_without_changing_api_contract(self):
         source = SOURCE.read_text()

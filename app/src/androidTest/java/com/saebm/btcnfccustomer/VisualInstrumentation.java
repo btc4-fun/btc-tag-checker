@@ -48,6 +48,12 @@ public final class VisualInstrumentation extends Instrumentation {
     private View tagged(String tag) {
         return activity.getWindow().getDecorView().findViewWithTag(tag);
     }
+    /** Depth-first position of the first visible view carrying the tag, or -1. */
+    private int indexOfChild(View root, String tag) {
+        List<View> all = views(root);
+        for (int i = 0; i < all.size(); i++) if (tag.equals(all.get(i).getTag()) && all.get(i).getVisibility() == View.VISIBLE) return i;
+        return -1;
+    }
     private void invoke(String name, Class<?>[] types, Object... args) throws Exception {
         Method method=MainActivity.class.getDeclaredMethod(name,types); method.setAccessible(true); method.invoke(activity,args);
     }
@@ -129,6 +135,8 @@ public final class VisualInstrumentation extends Instrumentation {
                         if (capture.equals("contact")) invoke("showContact",new Class<?>[]{});
                         if (capture.equals("costs")) invoke("showCosts",new Class<?>[]{});
                         if (capture.equals("payment")) invoke("showPublic", new Class<?>[]{String.class,String.class}, "payment", "اطلاعات پرداخت");
+                        if (capture.equals("learn")) invoke("showLearnGroup",new Class<?>[]{});
+                        if (capture.equals("groups")) invoke("showContactGroup",new Class<?>[]{});
                         if (capture.equals("consent")) {
                             Field uid=MainActivity.class.getDeclaredField("uid"); uid.setAccessible(true); uid.set(activity,"00000001");
                             invoke("confirmRequest",new Class<?>[]{String.class},(Object)null);
@@ -156,11 +164,46 @@ public final class VisualInstrumentation extends Instrumentation {
                     int[] location=new int[2]; content.getLocationOnScreen(location);
                     check(location[1]+content.getPaddingTop()>=safe.top+24*density,"header below safe inset with breathing room");
                     check(tagged("brand-mark")!=null,"website Bitcoin mark missing");
-                    check(tagged("scan-section")!=null && tagged("result-section")!=null && tagged("public-section")!=null,"section hierarchy missing");
+                    check(tagged("scan-section")!=null && tagged("result-section")!=null,"scan/result hierarchy missing");
+                    check(tagged("public-section")==null,"collapsible public link list must be gone from home");
+                    check(tagged("secondary-links-toggle")==null,"old toggle must be gone from home");
+                    Button groupLearn=(Button)tagged("group-learn-button");
+                    Button groupContact=(Button)tagged("group-contact-button");
+                    check(groupLearn!=null && groupContact!=null,"both group entry buttons exist on home");
+                    check(groupLearn.getText().toString().equals("امنیت، آموزش و شرایط"),"learn group label exact");
+                    check(groupContact.getText().toString().equals("اطلاعات پرداخت و تماس"),"contact group label exact");
+                    check(groupLearn.getContentDescription().toString().equals("امنیت، آموزش و شرایط؛ باز کردن فهرست"),"learn group content description");
+                    check(groupContact.getContentDescription().toString().equals("اطلاعات پرداخت و تماس؛ باز کردن فهرست"),"contact group content description");
+                    check(groupLearn.getLayoutDirection()==View.LAYOUT_DIRECTION_RTL && content.getLayoutDirection()==View.LAYOUT_DIRECTION_RTL,"home stays RTL");
+                    check(groupLearn.getMinimumHeight()>=Math.round(48*density),"learn group button meets 48dp touch target");
+                    check(groupContact.getMinimumHeight()>=Math.round(48*density),"contact group button meets 48dp touch target");
+                    boolean directLink=false;
+                    for(String label:new String[]{"راهنمای پاکت","شرایط و مسئولیت‌ها","اطلاعات پرداخت","امنیت و نگهداری","قیمت و هزینه‌ها","ارتباط با ما"})
+                        for(View v:views(content)) if(v instanceof Button && ((Button)v).getText().toString().equals(label)) directLink=true;
+                    check(!directLink,"no direct terms/payment/security page buttons on home");
                     Button requestButton=(Button)tagged("request-button");
                     check(requestButton!=null,"request button semantic locator missing");
-                    check(requestButton.getText().toString().equals("۲. دیدن موجودی و تراکنش‌ها"),"request button label matches visible numbered contract");
+                    check(requestButton.getText().toString().equals("دیدن موجودی و تراکنش‌ها"),"request button label is unnumbered contract");
                     check(!requestButton.isEnabled(),"no request without scanned UID");
+                    // Learn group: terms is the first focusable control.
+                    invoke("showLearnGroup",new Class<?>[]{});
+                    View learnPage=tagged("site-content"); verifyFonts(learnPage);
+                    check(learnPage.getLayoutDirection()==View.LAYOUT_DIRECTION_RTL,"learn group stays RTL");
+                    List<View> focusable=new ArrayList<>();
+                    for(View v:views(learnPage)) if(v.isFocusable() && v.getVisibility()==View.VISIBLE) focusable.add(v);
+                    check(!focusable.isEmpty() && "learn-terms".equals(focusable.get(0).getTag()),"first focusable on learn group is terms");
+                    int posTerms=indexOfChild(learnPage,"learn-terms"), posSecurity=indexOfChild(learnPage,"learn-security"), posGuide=indexOfChild(learnPage,"learn-guide");
+                    check(posTerms>=0 && posTerms<posSecurity && posSecurity<posGuide,"learn group order is terms, security, guide");
+                    check(tagged("learn-back")!=null && tagged("learn-site")!=null,"learn group back and open-site controls present");
+                    check(((Button)tagged("learn-guide")).getText().toString().equals("آموزش؛ پاکت و بیت‌کوین چیست"),"guide button label states what it covers");
+                    // Contact group: payment, costs, support, back — in that order.
+                    invoke("showContactGroup",new Class<?>[]{});
+                    View contactPage=tagged("site-content"); verifyFonts(contactPage);
+                    check(contactPage.getLayoutDirection()==View.LAYOUT_DIRECTION_RTL,"contact group stays RTL");
+                    check(tagged("contact-payment")!=null && tagged("contact-costs")!=null && tagged("contact-support")!=null && tagged("contact-back")!=null,"contact group controls present");
+                    int posPayment=indexOfChild(contactPage,"contact-payment"), posCosts=indexOfChild(contactPage,"contact-costs"), posSupport=indexOfChild(contactPage,"contact-support");
+                    check(posPayment>=0 && posPayment<posCosts && posCosts<posSupport,"contact group order is payment, costs, support");
+                    invoke("showInquiry",new Class<?>[]{});
                     check(field("client")==null,"opening screen must not create network client");
                     verifyFonts(content);
                     invoke("showPublic",new Class<?>[]{String.class,String.class},"payment","اطلاعات پرداخت");

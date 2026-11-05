@@ -48,6 +48,11 @@ import java.util.concurrent.Future;
 @SuppressLint("SetTextI18n")
 public final class MainActivity extends Activity {
     private static final String PUBLIC_SITE = "https://btc.saeb.id.ir/";
+    /** Single source of truth for offline public pages: guide, terms, payment, security, costs. */
+    private static final String[] PUBLIC_PAGES = {"guide", "terms", "payment", "security", "costs"};
+    /** Human labels for the same pages, kept index-aligned so no screen invents its own title. */
+    private static final String[] PUBLIC_TITLES = {"راهنمای پاکت", "شرایط و مسئولیت‌ها", "اطلاعات پرداخت", "امنیت و نگهداری", "راهنمای هزینه‌ها"};
+    private static final String HOME_TITLE = "بررسی پاکت";
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Latest gate = new Latest();
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
@@ -232,19 +237,35 @@ public final class MainActivity extends Activity {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2); params.topMargin = dp(12);
         value.setOnClickListener(view -> action.run()); parent.addView(value, params); return value;
     }
+    /** Group entry: same 48dp helper, fixed label, and a spoken suffix that names the action. */
+    private Button groupButton(LinearLayout parent, String tag, String label, Runnable action) {
+        Button value = button(parent, label, action, false);
+        value.setTag(tag);
+        value.setContentDescription(label + "؛ باز کردن فهرست");
+        return value;
+    }
+    /** System back from any inner screen returns home; home itself falls through to the system. */
+    private boolean backToHome() {
+        if (inquiry) return false;
+        showInquiry();
+        return true;
+    }
+    @Override public void onBackPressed() {
+        if (!backToHome()) super.onBackPressed();
+    }
     private void showInquiry() {
         cancelRequest(); stopReading(); inquiry = true; uid = null; cursor = null; cursors.clear();
-        screen("بررسی پاکت");
+        screen(HOME_TITLE);
         TextView deck = text(content, "اگر تازه شروع کرده‌اید، از همین‌جا خواندن برچسب را شروع کنید. بعد، با اجازهٔ شما اطلاعات عمومی از اینترنت دریافت می‌شود.", false);
         deck.setTextColor(color(R.color.muted));
-        LinearLayout scanSection = section("scan-section", "۱. خواندن برچسب", true);
+        LinearLayout scanSection = section("scan-section", "خواندن برچسب", true);
         text(scanSection, "تراشهٔ کوچک روی پاکت را با پشت گوشی لمس کنید. فقط شناسه خوانده می‌شود؛ چیزی روی برچسب نوشته یا خودکار ارسال نمی‌شود.", false).setTextColor(color(R.color.muted));
         text(scanSection, "اگر دکمه خاموش بود، ارتباط نزدیک را در تنظیمات گوشی روشن کنید. نام این گزینه:", false).setTextColor(color(R.color.muted));
         text(scanSection, "NFC", true).setTextColor(color(R.color.muted));
         scan = button(scanSection, "خواندن برچسب", this::beginScan, true);
         Button qrScan = button(scanSection, "اسکن آدرس عمومی یا لینک سایت", this::startQrScanner, false);
         qrScan.setTag("qr-scan");
-        request = button(scanSection, "۲. دیدن موجودی و تراکنش‌ها", () -> confirmRequest(null), false);
+        request = button(scanSection, "دیدن موجودی و تراکنش‌ها", () -> confirmRequest(null), false);
         request.setTag("request-button");
         status = text(scanSection, "هنوز برچسبی خوانده نشده است.", false);
         status.setTextSize(13); status.setTextColor(color(R.color.muted));
@@ -263,30 +284,14 @@ public final class MainActivity extends Activity {
         addressInput = input(lookup, "address-input", "bc1…");
         addressSubmit = button(lookup, "استعلام با آدرس عمومی", () -> submitLookup(false), false);
         addressSubmit.setTag("address-submit");
+        // Short home warning only; the full sentences live once in showLearnGroup.
         LinearLayout safety = section("privacy-section", "پیش از دریافت", false);
-        text(safety, "کلید خصوصی و کلمات بازیابی ارسال نمی‌شوند. شناسهٔ برچسب را می‌توان کپی کرد؛ فقط با اجازهٔ شما فرستاده می‌شود. این بررسی خصوصی نیست و اصل بودن یا مالکیت را ثابت نمی‌کند.", false);
-        text(safety, "دیدن موجودی یا شناسهٔ برچسب تضمین نمی‌کند که فقط شما به پول دسترسی دارید.", false);
-        text(safety, "برنامه خودکار بررسی یا دوباره تلاش نمی‌کند. سایت آدرس عمومی را برای دریافت اطلاعات به بلاک‌استریم می‌فرستد.", false).setTextColor(color(R.color.muted));
-        text(safety, "btc4.fun → Blockstream", true).setTextColor(color(R.color.accent));
-        LinearLayout links = section("public-section", "راهنماهای پاکت", false);
-        links.setVisibility(View.GONE);
-        Button secondaryToggle = button(content, "نمایش راهنماها و ارتباطات کمکی", () -> {}, false);
-        secondaryToggle.setOnClickListener(view -> {
-            boolean expanded = links.getVisibility() != View.VISIBLE;
-            links.setVisibility(expanded ? View.VISIBLE : View.GONE);
-            secondaryToggle.setText(expanded ? "بستن راهنماها و ارتباطات کمکی" : "نمایش راهنماها و ارتباطات کمکی");
-        });
-        secondaryToggle.setTag("secondary-links-toggle");
-        secondaryToggle.setContentDescription("راهنماها و ارتباطات کمکی");
-        text(links, "راهنماهای زیر بدون اینترنت باز می‌شوند. نسخهٔ تازه در سایت است:", false).setTextColor(color(R.color.muted));
-        text(links, "btc.saeb.id.ir", true).setTextColor(color(R.color.accent));
-        button(links, "باز کردن سایت راهنما", () -> openPublic(""), true);
-        button(links, "راهنمای پاکت", () -> showPublic("guide", "راهنمای پاکت"), false);
-        button(links, "شرایط و مسئولیت‌ها", () -> showPublic("terms", "شرایط و مسئولیت‌ها"), false);
-        button(links, "اطلاعات پرداخت", () -> showPublic("payment", "اطلاعات پرداخت"), false);
-        button(links, "امنیت و نگهداری", () -> showPublic("security", "امنیت و نگهداری"), false);
-        button(links, "قیمت و هزینه‌ها", this::showCosts, false);
-        button(links, "ارتباط با ما", this::showContact, false);
+        text(safety, "کلید خصوصی و کلمات بازیابی ارسال نمی‌شوند و چیزی خودکار فرستاده نمی‌شود.", false);
+        text(safety, "این بررسی خصوصی نیست؛ جزئیات در «امنیت، آموزش و شرایط».", false).setTextColor(color(R.color.muted));
+        // Two group entry points only: no direct page links on the home screen.
+        LinearLayout groups = section("group-section", "راهنما و ارتباطات", false);
+        groupButton(groups, "group-learn-button", "امنیت، آموزش و شرایط", this::showLearnGroup);
+        groupButton(groups, "group-contact-button", "اطلاعات پرداخت و تماس", this::showContactGroup);
         TextView footer = text(content, "برای یاد گرفتن و تجربه کردن؛ نه وعدهٔ ثروتمند شدن.", false);
         footer.setTextSize(12); footer.setTextColor(color(R.color.muted)); footer.setPadding(0, dp(32), 0, 0);
         updateButtons();
@@ -625,11 +630,55 @@ public final class MainActivity extends Activity {
         };
         countdown.run();
     }
-    private void showPublic(String page, String title) {
-        if (!Arrays.asList("guide", "terms", "payment", "security", "costs").contains(page)) return;
+    /** The one allowlist every public screen and every group reads from. */
+    private static boolean isPublicPage(String page) { return Arrays.asList(PUBLIC_PAGES).contains(page); }
+    private static String publicTitle(String page) {
+        int index = Arrays.asList(PUBLIC_PAGES).indexOf(page);
+        return index < 0 ? "" : PUBLIC_TITLES[index];
+    }
+    /** Shared prologue for inner pages: cancels work, leaves inquiry mode, and rebuilds the screen. */
+    private void innerScreen(String title) {
         cancelRequest(); stopReading(); inquiry = false; uid = null; cursor = null;
         screen(title);
-        button("بازگشت به موجودی پاکت", this::showInquiry);
+    }
+    private void showLearnGroup() {
+        innerScreen("امنیت، آموزش و شرایط");
+        text(content, "همهٔ این صفحه‌ها بدون اینترنت باز می‌شوند و نسخهٔ تازه در سایت است:", false).setTextColor(color(R.color.muted));
+        text(content, "btc.saeb.id.ir", true).setTextColor(color(R.color.accent));
+        // Owner order: terms first, then security, then the guide.
+        pageButton("learn-terms", "terms");
+        pageButton("learn-security", "security");
+        pageButton("learn-guide", "guide", "آموزش؛ پاکت و بیت‌کوین چیست");
+        LinearLayout safety = section("privacy-section", "پیش از دریافت", false);
+        text(safety, "کلید خصوصی و کلمات بازیابی ارسال نمی‌شوند. شناسهٔ برچسب را می‌توان کپی کرد؛ فقط با اجازهٔ شما فرستاده می‌شود. این بررسی خصوصی نیست و اصل بودن یا مالکیت را ثابت نمی‌کند.", false);
+        text(safety, "دیدن موجودی یا شناسهٔ برچسب تضمین نمی‌کند که فقط شما به پول دسترسی دارید.", false);
+        text(safety, "برنامه خودکار بررسی یا دوباره تلاش نمی‌کند. سایت آدرس عمومی را برای دریافت اطلاعات به بلاک‌استریم می‌فرستد.", false).setTextColor(color(R.color.muted));
+        text(safety, "btc4.fun → Blockstream", true).setTextColor(color(R.color.accent));
+        button("بازگشت به بررسی پاکت", this::showInquiry).setTag("learn-back");
+        button("دیدن نسخهٔ تازه در سایت", () -> openPublic("")).setTag("learn-site");
+        updateButtons();
+    }
+    private void showContactGroup() {
+        innerScreen("اطلاعات پرداخت و تماس");
+        text(content, "هر بخش جدا باز می‌شود؛ خروج از این فهرست با دکمهٔ پایین یا دکمهٔ بازگشت گوشی است.", false).setTextColor(color(R.color.muted));
+        pageButton("contact-payment", "payment");
+        button("قیمت و هزینه‌ها", this::showCosts).setTag("contact-costs");
+        button("ارتباط با ما", this::showContact).setTag("contact-support");
+        button("بازگشت به بررسی پاکت", this::showInquiry).setTag("contact-back");
+        updateButtons();
+    }
+    /** One offline page button per allowed page; the label can be overridden, never the target. */
+    private Button pageButton(String tag, String page) { return pageButton(tag, page, publicTitle(page)); }
+    private Button pageButton(String tag, String page, String label) {
+        if (!isPublicPage(page)) return null;
+        Button value = button(label, () -> showPublic(page, label));
+        value.setTag(tag);
+        return value;
+    }
+    private void showPublic(String page, String title) {
+        if (!isPublicPage(page)) return;
+        innerScreen(title);
+        button("بازگشت", this::showContactGroup);
         try (InputStream input = getAssets().open("public/" + page + ".txt")) {
             String body = RequestPolicy.read(input, RequestPolicy.MAX_BODY, System.nanoTime() + 2_000_000_000L);
             // Each paragraph has its own direction; account numbers and paths stay LTR.
@@ -639,12 +688,11 @@ public final class MainActivity extends Activity {
             }
         } catch (Exception ex) { text(content, "متن راهنما باز نشد. می‌توانید نسخهٔ تازهٔ آن را در سایت بخوانید.", false); }
         button("دیدن نسخهٔ تازه در سایت", () -> openPublic(page.equals("payment") ? "costs" : page));
-        button("بازگشت به موجودی پاکت", this::showInquiry);
+        button("بازگشت", this::showContactGroup);
     }
     private void showContact() {
-        cancelRequest(); stopReading(); inquiry = false; uid = null; cursor = null;
-        screen("ارتباط با ما");
-        button("بازگشت به موجودی پاکت", this::showInquiry);
+        innerScreen("ارتباط با ما");
+        button("بازگشت", this::showContactGroup);
         text(content, "فقط پرسش عمومی بفرستید. کلید خصوصی، کلمات بازیابی، عبارت عبور، فایل پشتیبان و عکس داخل پاکت را نفرستید. پاسخ فوری تضمین نمی‌شود.", false);
         text(content, "فرم پیام در مرورگر باز می‌شود. برنامه پیام ارسال نمی‌کند و شمارهٔ برچسب یا اطلاعات کیف پول را به مقصد اضافه نمی‌کند.", false);
         try (InputStream in = getAssets().open("public/contact-links.json")) {
@@ -678,7 +726,7 @@ public final class MainActivity extends Activity {
         cancelRequest(); stopReading(); inquiry=false; uid=null; cursor=null; market=null;
         speed="economy"; includeTag=false; budgetMode=false;
         screen("قیمت و هزینه‌ها"); costsPage=true;
-        button("بازگشت به موجودی پاکت",this::showInquiry);
+        button("بازگشت",this::showContactGroup);
         text(content,"نرخ فقط با دکمهٔ زیر از سایت دریافت می‌شود. مبلغ و بودجه ارسال نمی‌شوند. تغییر سرعت و برچسب، درخواست تازه‌ای نمی‌فرستد. این برآورد سفارش یا تعهد پرداخت نیست.",false);
         marketFetch=button("دریافت نرخ از سایت",this::fetchMarket);
         marketStatus=text(content,"هنوز نرخی دریافت نشده است.",false);
@@ -813,7 +861,7 @@ public final class MainActivity extends Activity {
         for(int i=0;i<fields.length;i++) if(!row.get(fields[i]).isJsonNull()) {text(parent,labels[i],false);text(parent,row.get(fields[i]).getAsString(),true);}
     }
     private void openPublic(String page) {
-        if (!page.isEmpty() && !Arrays.asList("guide", "terms", "costs", "security").contains(page)) return;
+        if (!page.isEmpty() && !isPublicPage(page)) return;
         AlertDialog external = new AlertDialog.Builder(this).setTitle("باز کردن سایت")
             .setMessage("این صفحه در مرورگر گوشی باز می‌شود و اینترنت لازم دارد. سایت اطلاعات اتصال شما را می‌بیند. شمارهٔ برچسب و آدرس کیف پول به لینک اضافه نمی‌شوند.")
             .setNegativeButton("لغو", null).setPositiveButton("باز کردن", (dialog, which) -> {
