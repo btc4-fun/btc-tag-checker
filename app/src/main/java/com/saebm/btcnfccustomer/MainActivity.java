@@ -6,6 +6,12 @@ import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
+import com.saebm.btcnfccustomer.core.QrPayload;
+import com.saebm.btcnfccustomer.core.AddressClient;
 import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.os.Handler;
@@ -51,7 +57,7 @@ public final class MainActivity extends Activity {
     private LinearLayout content, result;
     private TextView status;
     private Button scan, request, next;
-    private String uid, cursor;
+    private String uid, cursor, qrAddress, qrUrl;
     private boolean active, scanning, busy, inquiry = true;
     private long retryUntil, scanGeneration;
     private Runnable countdown;
@@ -229,6 +235,8 @@ public final class MainActivity extends Activity {
         text(scanSection, "اگر دکمه خاموش بود، ارتباط نزدیک را در تنظیمات گوشی روشن کنید. نام این گزینه:", false).setTextColor(color(R.color.muted));
         text(scanSection, "NFC", true).setTextColor(color(R.color.muted));
         scan = button(scanSection, "خواندن برچسب", this::beginScan, true);
+        Button qrScan = button(scanSection, "اسکن آدرس عمومی یا لینک سایت", this::startQrScanner, false);
+        qrScan.setTag("qr-scan");
         request = button(scanSection, "۲. دیدن موجودی و تراکنش‌ها", () -> confirmRequest(null), false);
         request.setTag("request-button");
         status = text(scanSection, "هنوز برچسبی خوانده نشده است.", false);
@@ -244,6 +252,15 @@ public final class MainActivity extends Activity {
         text(safety, "برنامه خودکار بررسی یا دوباره تلاش نمی‌کند. سایت آدرس عمومی را برای دریافت اطلاعات به بلاک‌استریم می‌فرستد.", false).setTextColor(color(R.color.muted));
         text(safety, "btc4.fun → Blockstream", true).setTextColor(color(R.color.accent));
         LinearLayout links = section("public-section", "راهنماهای پاکت", false);
+        links.setVisibility(View.GONE);
+        Button secondaryToggle = button(content, "نمایش راهنماها و ارتباطات کمکی", () -> {}, false);
+        secondaryToggle.setOnClickListener(view -> {
+            boolean expanded = links.getVisibility() != View.VISIBLE;
+            links.setVisibility(expanded ? View.VISIBLE : View.GONE);
+            secondaryToggle.setText(expanded ? "بستن راهنماها و ارتباطات کمکی" : "نمایش راهنماها و ارتباطات کمکی");
+        });
+        secondaryToggle.setTag("secondary-links-toggle");
+        secondaryToggle.setContentDescription("راهنماها و ارتباطات کمکی");
         text(links, "راهنماهای زیر بدون اینترنت باز می‌شوند. نسخهٔ تازه در سایت است:", false).setTextColor(color(R.color.muted));
         text(links, "btc.saeb.id.ir", true).setTextColor(color(R.color.accent));
         button(links, "باز کردن سایت راهنما", () -> openPublic(""), true);
@@ -284,10 +301,68 @@ public final class MainActivity extends Activity {
             }, NfcAdapter.FLAG_READER_NFC_A | NfcAdapter.FLAG_READER_NFC_B | NfcAdapter.FLAG_READER_NFC_F | NfcAdapter.FLAG_READER_NFC_V | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK, null);
         } catch (IllegalStateException | SecurityException ex) { scanning = false; status.setText("خواندن برچسب شروع نشد. تنظیمات گوشی را بررسی کنید."); updateButtons(); }
     }
+    private void startQrScanner() {
+        if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, 210);
+            return;
+        }
+        new IntentIntegrator(this).setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
+            .setCaptureActivity(SecureCaptureActivity.class)
+            .setPrompt("آدرس عمومی یا لینک سایت را اسکن کنید")
+            .setBarcodeImageEnabled(false).setBeepEnabled(false).setOrientationLocked(false).initiateScan();
+    }
+
+    @Override public void onRequestPermissionsResult(int code, String[] permissions, int[] grants) {
+        super.onRequestPermissionsResult(code, permissions, grants);
+        if (code == 210 && grants.length > 0 && grants[0] == PackageManager.PERMISSION_GRANTED) startQrScanner();
+        else if (code == 210 && status != null) status.setText("مجوز دوربین رد شد؛ برای اسکن، مجوز را در تنظیمات فعال کنید. هیچ داده‌ای ذخیره نشد.");
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        IntentResult scanned = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if (scanned == null || status == null) return;
+        if (scanned.getContents() == null) { status.setText("اسکن لغو شد؛ هیچ داده‌ای ذخیره نشد."); return; }
+        QrPayload.Result parsed = QrPayload.classify(scanned.getContents());
+        switch (parsed.kind) {
+            case BITCOIN_ADDRESS:
+            case BITCOIN_URI:
+                qrAddress = parsed.value; qrUrl = null;
+                status.setText("آدرس عمومی خوانده شد. برای استعلام عمومی یا باز کردن لینک، اجازهٔ جداگانه لازم است.");
+                confirmQrAddress();
+                break;
+            case ALLOWLISTED_HTTPS_URL:
+                qrUrl = parsed.value; qrAddress = null;
+                status.setText("لینک سایت مجاز شناسایی شد. خودکار باز نمی‌شود؛ برای باز کردن باید جداگانه تأیید کنید.");
+                confirmQrUrl();
+                break;
+            case UNTRUSTED:
+                status.setText("این لینک قابل اعتماد نیست و باز نمی‌شود.");
+                break;
+            default:
+                status.setText("محتوای QR آدرس یا لینک معتبر نیست؛ هیچ داده‌ای ذخیره نشد.");
+        }
+    }
+    private void confirmQrAddress() {
+        if (qrAddress == null) return;
+        new AlertDialog.Builder(this).setTitle("استعلام عمومی آدرس")
+            .setMessage("این آدرس عمومی به سایت ارسال می‌شود تا فقط نگاشت عمومی آدرس و شمارهٔ سریال دریافت شود. موجودی، تراکنش یا اطلاعات مشتری درخواست نمی‌شود.")
+            .setNegativeButton("لغو", null).setPositiveButton("استعلام همین آدرس", (d,w) -> fetchQrAddress()).show();
+    }
+    private void fetchQrAddress() {
+        final String address=qrAddress; status.setText("در حال استعلام عمومی آدرس…");
+        worker.submit(() -> { try { AddressClient.Mapping m=new AddressClient().fetch(address); main.post(() -> { if (address.equals(qrAddress)) { text(result,"آدرس عمومی",false); text(result,m.address,true); text(result,"شمارهٔ سریال عمومی",false); text(result,m.serial,true); status.setText("نگاشت عمومی دریافت شد. لینک فقط پس از تأیید شما باز می‌شود."); } }); } catch(Exception e) { main.post(() -> status.setText("استعلام عمومی دریافت نشد؛ داده‌ای نمایش داده نشد.")); } });
+    }
+    private void confirmQrUrl() {
+        if (qrUrl == null) return;
+        new AlertDialog.Builder(this).setTitle("باز کردن لینک مجاز")
+            .setMessage("این لینک در مرورگر باز می‌شود و مقصد، اطلاعات اتصال شما را می‌بیند. لینک خودکار باز نشده است.")
+            .setNegativeButton("لغو", null).setPositiveButton("باز کردن", (d,w) -> { Intent i=new Intent(Intent.ACTION_VIEW,Uri.parse(qrUrl)); i.addCategory(Intent.CATEGORY_BROWSABLE); try { startActivity(i); } catch(ActivityNotFoundException ignored) { status.setText("مرورگری برای باز کردن لینک پیدا نشد."); } }).show();
+    }
     private void stopReading() {
         scanGeneration++;
         if (nfc != null && scanning) {
-            try { nfc.disableReaderMode(this); } catch (IllegalStateException | SecurityException ignored) { /* No sensitive logs. */ }
+            try { nfc.disableReaderMode(this); } catch (IllegalStateException | SecurityException ignored) { }
         }
         scanning = false;
     }

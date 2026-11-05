@@ -8,13 +8,15 @@ class AppContract(unittest.TestCase):
   manifest = ROOT / 'app/src/main/AndroidManifest.xml'
   self.assertTrue(manifest.exists(), 'Native application manifest missing')
   root=ET.parse(manifest).getroot()
-  self.assertEqual({p.get(A+'name') for p in root.findall('uses-permission')}, {'android.permission.INTERNET','android.permission.NFC'})
+  self.assertEqual({p.get(A+'name') for p in root.findall('uses-permission')}, {'android.permission.INTERNET','android.permission.NFC','android.permission.CAMERA'})
   app=root.find('application')
   assert app is not None
   self.assertEqual(app.get(A+'allowBackup'),'false')
   self.assertEqual(app.get(A+'usesCleartextTraffic'),'false')
   self.assertEqual(app.get(A+'supportsRtl'),'true')
-  self.assertEqual(len(app.findall('activity')),1)
+  self.assertEqual(len(app.findall('activity')),2)
+  self.assertEqual(app.findall('activity')[1].get(A+'exported'),'true')
+  self.assertEqual(app.findall('activity')[0].get(A+'exported'),'false')
  def test_read_only_scan_opt_in_and_background_lifecycle(self):
   source = ROOT / 'app/src/main/java/com/saebm/btcnfccustomer/MainActivity.java'
   self.assertTrue(source.exists(), 'Native UI missing')

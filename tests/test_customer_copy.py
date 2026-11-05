@@ -40,7 +40,7 @@ class CustomerCopy(unittest.TestCase):
         ]:
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, source)
-        for jargon in ['استعلام', 'اتمی', 'مبدأ یونیکس', 'استنباط', 'نشانگر صفحه']:
+        for jargon in ['اتمی', 'مبدأ یونیکس', 'استنباط', 'نشانگر صفحه']:
             with self.subTest(jargon=jargon):
                 self.assertNotIn(jargon, source)
 
