@@ -3,17 +3,17 @@
 نسخه و کد نصب:
 
 ```text
-1.1.8
-versionCode: 14
+1.1.9
+versionCode: 15
 ```
 
-برنامهٔ مشتری اکنون فهرست لینک‌های عمومی فروشنده را روی کارت استعلام نشان می‌دهد. اگر فروشنده در سایت شبکه‌های اجتماعی یا راه‌های تماس ثبت کرده باشد، هر مورد با برچسب کوتاهش و یک دکمهٔ «باز کردن» می‌آید؛ اول تأیید صریح کاربر، بعد باز شدن در مرورگر. برنامه خودش هیچ لینکی را بارگذاری نمی‌کند. شناسهٔ بسته و سیاست امضا تغییر نکرده‌اند.
+برنامهٔ مشتری اکنون فهرست لینک‌های عمومی فروشنده را با قاعدهٔ بازتری روی کارت استعلام نشان می‌دهد. هر لینک پروفایل خود فروشنده است؛ پس برخلاف نشانی سایت و تصویر، محدود به میزبان‌های پروژه نیست. آدرس `https` روی هر میزبانی پذیرفته می‌شود (میزبانی که زیرخط دارد، مانند `b_tc4fun_ir.t.me`، هم معتبر است) و مسیرهای تماس `mailto:` و `tel:` هم پشتیبانی می‌شوند. برچسب هر لینک می‌تواند متن کوتاه انسانی مثل «اینستاگرام» یا «ایمیل» باشد و همان‌طور که نوشته شده نمایش داده می‌شود.
 
-کلید `links` در پاسخ سرویس به‌صورت اختیاری خوانده می‌شود، پس پاسخ‌های قدیمی بدون این کلید هم مثل قبل کار می‌کنند و هر کلید ناشناختهٔ دیگر همچنان کل پاسخ را رد می‌کند. ورودی نامعتبر (نشانی غیر `https` یا برچسب بدشکل) فقط خودش حذف می‌شود و بقیهٔ کارت می‌ماند؛ حداکثر ۲۰ لینک نمایش داده می‌شود.
+همان قاعدهٔ قبلی حفظ شده است: دکمهٔ «باز کردن» با تأیید صریح کاربر مرورگر را باز می‌کند و برنامه خودش هیچ لینکی را بارگذاری نمی‌کند. کلید `links` در پاسخ سرویس اختیاری است، پس پاسخ‌های قدیمی بدون این کلید هم خوانده می‌شوند و هر کلید ناشناختهٔ دیگر همچنان کل پاسخ را رد می‌کند. ورودی نامعتبر فقط خودش حذف می‌شود، نه کل کارت؛ حداکثر ۲۰ لینک نمایش داده می‌شود. شناسهٔ بسته و سیاست امضا تغییر نکرده‌اند.
 
-The customer app now shows the seller's public links list on the lookup card: each entry appears with its short label next to an explicit "open" button, and the browser opens only after consent. Nothing is fetched into the app. Payloads without the new optional `links` key still parse, an invalid entry is dropped on its own, and at most 20 links are shown. Package id and signing policy are unchanged.
+The customer app now shows the seller's public links under a wider rule: a link is the seller's own profile page, so — unlike the site and image URLs — it is not limited to the project's hosts. Any `https` address is accepted (including a host with an underscore such as a `t.me` alias), and `mailto:`/`tel:` contact routes are supported. A label may be short human text such as a Persian name and is shown exactly as written. An explicit consent step still comes first and nothing is fetched into the app; an invalid entry is dropped on its own and at most 20 links are shown. Package id and signing policy are unchanged.
 
-این یادداشت فقط تغییرات و شرط‌های بررسی نسخهٔ ۱.۱.۸ را ثبت می‌کند و به معنی ساخته‌شدن، امضاشدن یا انتشار فایل APK جدید نیست.
+این یادداشت فقط تغییرات و شرط‌های بررسی نسخهٔ ۱.۱.۹ را ثبت می‌کند و به معنی ساخته‌شدن، امضاشدن یا انتشار فایل APK جدید نیست.
 
 آزمون سیاست پنجره در همان دروازهٔ شبیه‌ساز میزبانی‌شده اجرا می‌شود. این آزمون روی پنجرهٔ واقعی شبیه‌ساز سیاست انتشار و راه‌اندازی فعالیت آزمایشی را بررسی می‌کند؛ اثبات اجرای بسته روی گوشی نیست.
 
