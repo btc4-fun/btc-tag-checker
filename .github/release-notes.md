@@ -3,15 +3,17 @@
 نسخه و کد نصب:
 
 ```text
-1.1.7
-versionCode: 13
+1.1.8
+versionCode: 14
 ```
 
-برنامهٔ مشتری اکنون هم شکل جدید سریال کوتاه (۵ نویسه: سال base36 + ماه + روز + ساعت + شمارندهٔ ساعت) و هم شکل قدیمی ۹ نویسه‌ای را می‌پذیرد. این تغییر فقط الگوی پذیرش سریال را در `RequestPolicy` و `Response` گسترده می‌کند تا کاغذهای تازه‌چاپ با سریال کوتاه هم قابل استعلام باشند؛ کاغذهای قدیمی معتبر می‌مانند. شناسهٔ بسته و سیاست امضا تغییر نکرده‌اند.
+برنامهٔ مشتری اکنون فهرست لینک‌های عمومی فروشنده را روی کارت استعلام نشان می‌دهد. اگر فروشنده در سایت شبکه‌های اجتماعی یا راه‌های تماس ثبت کرده باشد، هر مورد با برچسب کوتاهش و یک دکمهٔ «باز کردن» می‌آید؛ اول تأیید صریح کاربر، بعد باز شدن در مرورگر. برنامه خودش هیچ لینکی را بارگذاری نمی‌کند. شناسهٔ بسته و سیاست امضا تغییر نکرده‌اند.
 
-The customer app now accepts both the new short serial shape (5 chars: base36 year + month + day + hour + hour counter) and the legacy 9-char shape. This only widens the serial admission pattern in `RequestPolicy` and `Response` so freshly printed short-serial paper can be queried; older paper stays valid. Package id and signing policy are unchanged.
+کلید `links` در پاسخ سرویس به‌صورت اختیاری خوانده می‌شود، پس پاسخ‌های قدیمی بدون این کلید هم مثل قبل کار می‌کنند و هر کلید ناشناختهٔ دیگر همچنان کل پاسخ را رد می‌کند. ورودی نامعتبر (نشانی غیر `https` یا برچسب بدشکل) فقط خودش حذف می‌شود و بقیهٔ کارت می‌ماند؛ حداکثر ۲۰ لینک نمایش داده می‌شود.
 
-این یادداشت فقط تغییرات و شرط‌های بررسی نسخهٔ ۱.۱.۷ را ثبت می‌کند و به معنی ساخته‌شدن، امضاشدن یا انتشار فایل APK جدید نیست.
+The customer app now shows the seller's public links list on the lookup card: each entry appears with its short label next to an explicit "open" button, and the browser opens only after consent. Nothing is fetched into the app. Payloads without the new optional `links` key still parse, an invalid entry is dropped on its own, and at most 20 links are shown. Package id and signing policy are unchanged.
+
+این یادداشت فقط تغییرات و شرط‌های بررسی نسخهٔ ۱.۱.۸ را ثبت می‌کند و به معنی ساخته‌شدن، امضاشدن یا انتشار فایل APK جدید نیست.
 
 آزمون سیاست پنجره در همان دروازهٔ شبیه‌ساز میزبانی‌شده اجرا می‌شود. این آزمون روی پنجرهٔ واقعی شبیه‌ساز سیاست انتشار و راه‌اندازی فعالیت آزمایشی را بررسی می‌کند؛ اثبات اجرای بسته روی گوشی نیست.
 
