@@ -19,6 +19,12 @@ public class RequestPolicyTest {
   assertEquals("https://btc4.fun/api/addresses/" + address, RequestPolicy.addressUrl(address, false).toString());
   // The site's own shape admits any prefix, so a raw UID like 00017F80 is a legal serial there too.
   assertTrue(RequestPolicy.validSerial("00017F80"));
+  // New short stem (5 chars: Y M D H X) plus base36 index is accepted; legacy 9-char stem still is.
+  assertTrue(RequestPolicy.validSerial("6a6dk0"));
+  assertTrue(RequestPolicy.validSerial("TEST-6a6dkz"));
+  assertTrue(RequestPolicy.validSerial("26b1z00001"));
+  assertFalse(RequestPolicy.validSerial("6a6d"));
+  assertFalse(RequestPolicy.validSerial("6A6dk0"));
   for (String serial : new String[]{"", "TEST-ONLY", "26b1z00001/", " 26b1z00001", "26b1z00001?balance=1", "../", "x".repeat(65)}) {
    assertThrows(IllegalArgumentException.class, () -> RequestPolicy.walletUrl(serial, true));
    assertFalse(RequestPolicy.validSerial(serial));

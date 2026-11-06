@@ -7,7 +7,11 @@ public final class RequestPolicy {
  /** The site's own printed-serial shape; the app never invents a looser one. */
  public static final String SERIAL_PATTERN =
   "(?=[A-Za-z0-9][A-Za-z0-9_\\-]{0,63}$)[A-Za-z0-9_\\-]*"
-  + "[0-9]{2}[0-9ab][0-9a-u][0-9a-mz](?:[0-5][0-9][0-5][0-9]|[0-9a-zA-X]{2})[0-9a-z]+";
+  + "(?:"
+  + "[0-9]{2}[0-9ab][0-9a-u][0-9a-mz](?:[0-5][0-9][0-5][0-9]|[0-9a-zA-X]{2})[0-9a-z]+"
+  + "|"
+  + "[0-9a-z][0-9ab][0-9a-u][0-9a-mz][0-9a-z][0-9a-z]+"
+  + ")";
  public static URL url(String uid, String cursor) throws MalformedURLException {
   if (uid == null || !uid.matches("(?:[0-9A-F]{8}|[0-9A-F]{14}|[0-9A-F]{20})")) throw new IllegalArgumentException("Invalid UID");
   if (cursor != null && !cursor.matches("[0-9a-f]{64}")) throw new IllegalArgumentException("Invalid cursor");
