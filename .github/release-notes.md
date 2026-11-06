@@ -3,15 +3,15 @@
 نسخه و کد نصب:
 
 ```text
-1.1.6
-versionCode: 12
+1.1.7
+versionCode: 13
 ```
 
-استعلام موجودی با سریال چاپ‌شده و با نشانی عمومی بیت‌کوین اضافه شد. نشانی ثبت‌نشده پیام «آدرس ثبت‌نشده» می‌گیرد و هرگز موجودی صفر جعلی نشان داده نمی‌شود. اطلاعات عمومی اختیاری فروشنده (یادداشت، سایت، تصویر) فقط به‌صورت پیوند با تأیید و رضایت کاربر نمایش داده می‌شود. صفحهٔ اول ساده شد: آموزش/امنیت/شرایط در یک دکمه (اول شرایط) و پرداخت/تماس در دکمه‌ای دیگر. شناسهٔ بسته و سیاست امضا تغییر نکرده‌اند.
+برنامهٔ مشتری اکنون هم شکل جدید سریال کوتاه (۵ نویسه: سال base36 + ماه + روز + ساعت + شمارندهٔ ساعت) و هم شکل قدیمی ۹ نویسه‌ای را می‌پذیرد. این تغییر فقط الگوی پذیرش سریال را در `RequestPolicy` و `Response` گسترده می‌کند تا کاغذهای تازه‌چاپ با سریال کوتاه هم قابل استعلام باشند؛ کاغذهای قدیمی معتبر می‌مانند. شناسهٔ بسته و سیاست امضا تغییر نکرده‌اند.
 
-Balance inquiry by printed serial and by public bitcoin address. An unregistered address shows dedicated «آدرس ثبت‌نشده» messaging and never a fake zero balance. Optional public seller metadata (notes, site, image) appears only as consent-gated links. The home screen is regrouped: learn/security/terms in one button (terms first) and payment/contact in another.
+The customer app now accepts both the new short serial shape (5 chars: base36 year + month + day + hour + hour counter) and the legacy 9-char shape. This only widens the serial admission pattern in `RequestPolicy` and `Response` so freshly printed short-serial paper can be queried; older paper stays valid. Package id and signing policy are unchanged.
 
-این یادداشت فقط تغییرات و شرط‌های بررسی نسخهٔ ۱.۱.۶ را ثبت می‌کند و به معنی ساخته‌شدن، امضاشدن یا انتشار فایل APK جدید نیست.
+این یادداشت فقط تغییرات و شرط‌های بررسی نسخهٔ ۱.۱.۷ را ثبت می‌کند و به معنی ساخته‌شدن، امضاشدن یا انتشار فایل APK جدید نیست.
 
 آزمون سیاست پنجره در همان دروازهٔ شبیه‌ساز میزبانی‌شده اجرا می‌شود. این آزمون روی پنجرهٔ واقعی شبیه‌ساز سیاست انتشار و راه‌اندازی فعالیت آزمایشی را بررسی می‌کند؛ اثبات اجرای بسته روی گوشی نیست.
 
