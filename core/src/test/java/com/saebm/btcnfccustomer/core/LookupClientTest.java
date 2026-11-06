@@ -27,7 +27,8 @@ public class LookupClientTest {
         return fields() + ",\"balance\":{\"address\":\"" + ADDRESS + "\",\"confirmed_sats\":500,\"pending_delta_sats\":-50,"
             + "\"source\":\"https://blockstream.info/api\",\"fetched_at\":\"2026-10-31T23:59:30+00:00\"},"
             + "\"public\":{\"notes\":\"یادداشت نمونه\",\"site\":{\"key\":\"example-shop\",\"url\":\"https://example.com/\"},"
-            + "\"image_url\":\"https://btc4.fun/public-images/1.png\"}}";
+            + "\"image_url\":\"https://btc4.fun/public-images/1.png\","
+            + "\"links\":{\"instagram\":\"https://instagram.com/example\",\"telegram\":\"https://t.me/example\"}}}";
     }
     static LookupClient local(MockWebServer server) {
         return LookupClient.forCalls(request -> Client.http().newCall(request.newBuilder().url(server.url(request.url().encodedPath() + (request.url().encodedQuery() == null ? "" : "?" + request.url().encodedQuery()))).build()), "https://btc4.fun/", () -> WALL, () -> MONO);
@@ -60,8 +61,42 @@ public class LookupClientTest {
             assertTrue(lookup.balance.freshness.usable(MONO + 269999)); assertFalse(lookup.balance.freshness.usable(MONO + 270000));
             assertEquals("یادداشت نمونه", lookup.publicInfo.notes); assertEquals("example-shop", lookup.publicInfo.siteKey);
             assertEquals("https://example.com/", lookup.publicInfo.siteUrl); assertEquals("https://btc4.fun/public-images/1.png", lookup.publicInfo.imageUrl);
+            assertEquals(2, lookup.publicInfo.links.size());
+            assertEquals("instagram", lookup.publicInfo.links.get(0).key);
+            assertEquals("https://instagram.com/example", lookup.publicInfo.links.get(0).url);
+            assertEquals("telegram", lookup.publicInfo.links.get(1).key);
+            assertEquals("https://t.me/example", lookup.publicInfo.links.get(1).url);
         }
     }
+    /** A payload whose public block is null or absent: the card still loads with no extra fields. */
+    @Test public void publicPayloadWithoutLinksStillParses() throws Exception {
+        try (MockWebServer server = new MockWebServer()) {
+            server.enqueue(json(fields() + ",\"balance\":{\"address\":\"" + ADDRESS + "\",\"confirmed_sats\":0,\"pending_delta_sats\":0,\"source\":\"x\",\"fetched_at\":\"2026-10-31T23:59:30Z\"},\"public\":{\"notes\":null,\"site\":{\"key\":null,\"url\":null},\"image_url\":null}}"));
+            server.start();
+            LookupClient.Lookup lookup = local(server).fetchByAddress(ADDRESS, true);
+            assertTrue(lookup.publicInfo.empty());
+            assertTrue(lookup.publicInfo.links.isEmpty());
+        }
+    }
+
+    /** One bad entry is dropped; the rest of the card and the good links survive. */
+    @Test public void badLinkIsDroppedWithoutLosingTheCard() throws Exception {
+        try (MockWebServer server = new MockWebServer()) {
+            server.enqueue(json(fields() + ",\"balance\":{\"address\":\"" + ADDRESS + "\",\"confirmed_sats\":0,\"pending_delta_sats\":0,\"source\":\"x\",\"fetched_at\":\"2026-10-31T23:59:30Z\"},"
+                + "\"public\":{\"notes\":\"n\",\"site\":{\"key\":null,\"url\":null},\"image_url\":null,\"links\":{"
+                + "\"Instagram\":\"https://instagram.com/example\","
+                + "\"bad key\":\"https://t.me/x\","
+                + "\"tel\":\"http://insecure.example/\","
+                + "\"mail\":\"https://mail.example/contact\"}}}"));
+            server.start();
+            LookupClient.Lookup lookup = local(server).fetchByAddress(ADDRESS, true);
+            assertEquals("n", lookup.publicInfo.notes);
+            assertEquals(2, lookup.publicInfo.links.size());
+            assertEquals("instagram", lookup.publicInfo.links.get(0).key);
+            assertEquals("mail", lookup.publicInfo.links.get(1).key);
+        }
+    }
+
     @Test public void serialLookupUsesWalletPathAndFlag() throws Exception {
         try (MockWebServer server = new MockWebServer()) {
             server.enqueue(json(full())); server.start();

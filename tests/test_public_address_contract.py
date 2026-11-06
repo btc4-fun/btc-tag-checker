@@ -53,6 +53,19 @@ class PublicAddressContract(unittest.TestCase):
         self.assertNotIn("ImageView(this)", activity.split("renderLookup")[-1])
         self.assertIn('setTag("image-open")', activity)
 
+    def test_public_links_are_optional_and_consent_gated(self):
+        source = (ROOT / "core/src/main/java/com/saebm/btcnfccustomer/core/LookupClient.java").read_text()
+        # "links" is a newer key: the allowlist must accept payloads without it too.
+        self.assertIn('Arrays.asList("notes", "site", "image_url", "links")', source)
+        self.assertIn(".containsAll(keys)", source)
+        self.assertIn("MAX_LINKS", source)
+        activity = (ROOT / "app/src/main/java/com/saebm/btcnfccustomer/MainActivity.java").read_text()
+        render = activity.split("renderLookup")[-1]
+        # Every link goes through the same consent dialog as the site and image buttons.
+        self.assertIn('"link-open:"', render)
+        self.assertIn("info.links", render)
+        self.assertGreaterEqual(render.count("confirmOpen("), 3)
+
     def test_unified_lookup_path_exists_for_serial_and_address(self):
         activity = (ROOT / "app/src/main/java/com/saebm/btcnfccustomer/MainActivity.java").read_text()
         for tag in ('"serial-input"', '"serial-submit"', '"address-input"', '"address-submit"'):

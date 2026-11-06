@@ -31,6 +31,8 @@ public final class LookupClient {
     /** The only image host the customer app accepts; anything else is dropped, not shown. */
     public static final String IMAGE_HOST = "btc4.fun";
     public static final String LOOKUP_PREFIX = "https://btc4.fun/s/";
+    /** The most public links the card will show; the site caps the same way. */
+    public static final int MAX_LINKS = 20;
 
     public static final class Balance {
         public final String address, source, fetchedAt;
@@ -42,13 +44,27 @@ public final class LookupClient {
         }
     }
 
-    /** Optional seller fields. Each is null when absent or rejected; the card omits nulls. */
+    /**
+     * Optional seller fields. Each is null when absent or rejected; the card omits nulls.
+     * {@code links} is an ordered list of seller-chosen key/value pairs (instagram, telegram, ...);
+     * it is empty when the site sends none or every entry is rejected.
+     */
     public static final class PublicInfo {
         public final String notes, siteKey, siteUrl, imageUrl;
-        private PublicInfo(String notes, String siteKey, String siteUrl, String imageUrl) {
+        public final java.util.List<Link> links;
+        private PublicInfo(String notes, String siteKey, String siteUrl, String imageUrl, java.util.List<Link> links) {
             this.notes = notes; this.siteKey = siteKey; this.siteUrl = siteUrl; this.imageUrl = imageUrl;
+            this.links = java.util.Collections.unmodifiableList(links);
         }
-        public boolean empty() { return notes == null && siteKey == null && imageUrl == null; }
+        public boolean empty() {
+            return notes == null && siteKey == null && imageUrl == null && links.isEmpty();
+        }
+    }
+
+    /** One seller-chosen public link: a short label and an https address. */
+    public static final class Link {
+        public final String key, url;
+        private Link(String key, String url) { this.key = key; this.url = url; }
     }
 
     public static final class Lookup {
@@ -180,7 +196,10 @@ public final class LookupClient {
 
     private static PublicInfo publicInfo(JsonElement element) {
         JsonObject row = object(element);
-        if (!row.keySet().equals(new HashSet<>(Arrays.asList("notes", "site", "image_url")))) throw new IllegalArgumentException();
+        // "links" is newer than the first app builds: it is optional so old and new payloads both parse,
+        // while any other unknown key still fails closed.
+        Set<String> keys = row.keySet();
+        if (!new HashSet<>(Arrays.asList("notes", "site", "image_url", "links")).containsAll(keys)) throw new IllegalArgumentException();
         String notes = optionalText(row, "notes", 280);
         String siteKey = null, siteUrl = null;
         if (row.has("site")) {
@@ -194,7 +213,38 @@ public final class LookupClient {
         }
         String imageUrl = optionalText(row, "image_url", 512);
         if (imageUrl != null && !httpsUrl(imageUrl, true)) imageUrl = null;
-        return new PublicInfo(notes, siteKey, siteUrl, imageUrl);
+        return new PublicInfo(notes, siteKey, siteUrl, imageUrl, links(row.get("links")));
+    }
+
+    /**
+     * Seller-chosen public links. A single bad entry is dropped on its own, never the whole card.
+     * Keys are lowercase labels (a-z 0-9 . _ -, 1-32) and values are absolute https URLs.
+     */
+    private static java.util.List<Link> links(JsonElement element) {
+        java.util.List<Link> out = new java.util.ArrayList<>();
+        if (element == null || element.isJsonNull()) return out;
+        if (!element.isJsonObject()) return out;
+        for (java.util.Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
+            if (out.size() >= MAX_LINKS) break;
+            String key = entry.getKey().trim().toLowerCase(Locale.ROOT);
+            if (!key.matches("[a-z0-9][a-z0-9._-]{0,31}")) continue;
+            JsonElement value = entry.getValue();
+            if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) continue;
+            String url = value.getAsString().trim();
+            if (url.isEmpty() || url.length() > 512 || !httpsUrl(url, false) || !cleanText(url)) continue;
+            out.add(new Link(key, url));
+        }
+        return out;
+    }
+
+    /** Text with no control or bidi/format characters, the same admission rule as the site. */
+    private static boolean cleanText(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c < 0x20 || (c >= 0x7f && c <= 0x9f) || (c >= 0x200b && c <= 0x200f)
+                    || (c >= 0x202a && c <= 0x202e) || (c >= 0x2060 && c <= 0x206f) || c == 0xfeff) return false;
+        }
+        return true;
     }
 
     /** https only, no userinfo, no port, no query/fragment; image host must be the approved one. */

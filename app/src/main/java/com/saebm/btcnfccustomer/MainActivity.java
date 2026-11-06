@@ -478,6 +478,15 @@ public final class MainActivity extends Activity {
                 Button image = button(result, "باز کردن تصویر پاکت", () -> confirmOpen(info.imageUrl, "تصویر پاکت", "تصویر پاکت در مرورگر باز می‌شود. برنامه خودش تصویر را بارگذاری نمی‌کند."), false);
                 image.setTag("image-open");
             }
+            if (!info.links.isEmpty()) {
+                text(result, "شبکه‌های اجتماعی و راه‌های تماس فروشنده", false);
+                for (LookupClient.Link link : info.links) {
+                    text(result, link.key, true);
+                    Button open = button(result, "باز کردن " + link.key,
+                            () -> confirmOpen(link.url, link.key, "این نشانی در مرورگر باز می‌شود. آن سایت اطلاعات اتصال شما را می‌بیند."), false);
+                    open.setTag("link-open:" + link.key);
+                }
+            }
         }
         text(result, "صفحهٔ عمومی این کیف پول", false); text(result, lookup.lookupUrl, true);
         Button page = button(result, "باز کردن صفحهٔ عمومی در سایت", () -> confirmOpen(lookup.lookupUrl, "صفحهٔ عمومی", "صفحهٔ عمومی این کیف پول در مرورگر باز می‌شود."), false);
