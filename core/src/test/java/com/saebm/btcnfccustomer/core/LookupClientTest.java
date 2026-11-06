@@ -85,7 +85,8 @@ public class LookupClientTest {
             server.enqueue(json(fields() + ",\"balance\":{\"address\":\"" + ADDRESS + "\",\"confirmed_sats\":0,\"pending_delta_sats\":0,\"source\":\"x\",\"fetched_at\":\"2026-10-31T23:59:30Z\"},"
                 + "\"public\":{\"notes\":\"n\",\"site\":{\"key\":null,\"url\":null},\"image_url\":null,\"links\":{"
                 + "\"Instagram\":\"https://instagram.com/example\","
-                + "\"bad key\":\"https://t.me/x\","
+                + "\"javascript\":\"javascript:alert(1)\","
+                + "\"userinfo\":\"https://user:pw@instagram.com/x\","
                 + "\"tel\":\"http://insecure.example/\","
                 + "\"mail\":\"https://mail.example/contact\"}}}"));
             server.start();
@@ -94,6 +95,23 @@ public class LookupClientTest {
             assertEquals(2, lookup.publicInfo.links.size());
             assertEquals("instagram", lookup.publicInfo.links.get(0).key);
             assertEquals("mail", lookup.publicInfo.links.get(1).key);
+        }
+    }
+
+    /** Persian labels plus mailto:/tel: routes survive; a bare email becomes mailto:. */
+    @Test public void persianLabelsAndContactRoutesParse() throws Exception {
+        try (MockWebServer server = new MockWebServer()) {
+            server.enqueue(json(fields() + ",\"balance\":{\"address\":\"" + ADDRESS + "\",\"confirmed_sats\":0,\"pending_delta_sats\":0,\"source\":\"x\",\"fetched_at\":\"2026-10-31T23:59:30Z\"},"
+                + "\"public\":{\"notes\":null,\"site\":{\"key\":null,\"url\":null},\"image_url\":null,\"links\":{"
+                + "\"\u0627\u06cc\u0645\u06cc\u0644\":\"mailto:09113458375@btc4.fun\","
+                + "\"\u062a\u0644\u0641\u0646\":\"tel:+989113458375\","
+                + "\"\u062a\u0644\u06af\u0631\u0627\u0645\":\"https://b_tc4fun_ir.t.me\"}}}"));
+            server.start();
+            LookupClient.Lookup lookup = local(server).fetchByAddress(ADDRESS, true);
+            assertEquals(3, lookup.publicInfo.links.size());
+            assertEquals("mailto:09113458375@btc4.fun", lookup.publicInfo.links.get(0).url);
+            assertEquals("tel:+989113458375", lookup.publicInfo.links.get(1).url);
+            assertEquals("https://b_tc4fun_ir.t.me", lookup.publicInfo.links.get(2).url);
         }
     }
 

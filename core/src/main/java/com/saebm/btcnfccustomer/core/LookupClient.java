@@ -33,6 +33,8 @@ public final class LookupClient {
     public static final String LOOKUP_PREFIX = "https://btc4.fun/s/";
     /** The most public links the card will show; the site caps the same way. */
     public static final int MAX_LINKS = 20;
+    /** A link label is a slug or short human text, matching the site's limit. */
+    public static final int MAX_LABEL = 32;
 
     public static final class Balance {
         public final String address, source, fetchedAt;
@@ -218,7 +220,9 @@ public final class LookupClient {
 
     /**
      * Seller-chosen public links. A single bad entry is dropped on its own, never the whole card.
-     * Keys are lowercase labels (a-z 0-9 . _ -, 1-32) and values are absolute https URLs.
+     * A label is a lowercase slug (a-z 0-9 . _ -, 1-32) or short human text such as a Persian
+     * name; a value is an https URL on any host (the seller's own profile), a mailto:/tel: route,
+     * or a bare email/phone.
      */
     private static java.util.List<Link> links(JsonElement element) {
         java.util.List<Link> out = new java.util.ArrayList<>();
@@ -226,15 +230,59 @@ public final class LookupClient {
         if (!element.isJsonObject()) return out;
         for (java.util.Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
             if (out.size() >= MAX_LINKS) break;
-            String key = entry.getKey().trim().toLowerCase(Locale.ROOT);
-            if (!key.matches("[a-z0-9][a-z0-9._-]{0,31}")) continue;
+            String key = entry.getKey().trim();
+            if (!cleanText(key)) continue;
+            String label = key.toLowerCase(Locale.ROOT).matches("[a-z0-9][a-z0-9._-]{0,31}") ? key.toLowerCase(Locale.ROOT) : key;
+            if (label.isEmpty() || label.length() > MAX_LABEL) continue;
             JsonElement value = entry.getValue();
             if (value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) continue;
-            String url = value.getAsString().trim();
-            if (url.isEmpty() || url.length() > 512 || !httpsUrl(url, false) || !cleanText(url)) continue;
-            out.add(new Link(key, url));
+            String url = linkHref(value.getAsString());
+            if (url != null) out.add(new Link(label, url));
         }
         return out;
+    }
+
+    /** An allowed href: any https URL, a mailto:/tel: route, or a bare email/phone. */
+    private static String linkHref(String raw) {
+        String text = raw == null ? "" : raw.trim();
+        if (text.isEmpty() || text.length() > 512 || !cleanText(text)) return null;
+        boolean spaced = text.chars().anyMatch(Character::isWhitespace);
+        if (spaced && !text.contains("@") && !text.matches("[+0-9][0-9 ().-]*")) return null;
+        if (text.startsWith("https://")) return linkUrl(text);
+        int cut = text.indexOf(':');
+        String scheme = cut == -1 ? "" : text.substring(0, cut).toLowerCase(Locale.ROOT);
+        if ("mailto".equals(scheme)) {
+            String target = text.substring(cut + 1).trim();
+            return target.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+") ? "mailto:" + target : null;
+        }
+        if ("tel".equals(scheme)) return tel(text.substring(cut + 1).trim());
+        if (text.contains("@") && !text.contains("/")) {
+            return text.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+") ? "mailto:" + text : null;
+        }
+        String phone = tel(text);
+        if (phone != null) return phone;
+        return "https".equals(scheme) ? linkUrl(text) : null;
+    }
+
+    /**
+     * A seller's own https profile page. Any host is allowed (a link is not the
+     * site/image URL), so a host with an underscore (e.g. a Telegram t.me alias)
+     * is accepted; only a missing host, userinfo, port or bad shape is rejected.
+     */
+    private static String linkUrl(String value) {
+        try {
+            URI uri = new URI(value);
+            if (!"https".equals(uri.getScheme()) || uri.getRawAuthority() == null
+                    || uri.getPort() != -1 || uri.getUserInfo() != null) return null;
+            return uri.getRawAuthority().isEmpty() ? null : value;
+        } catch (java.net.URISyntaxException ex) { return null; }
+    }
+
+    /** A phone number becomes a tel: route with spaces and dashes removed, or null. */
+    private static String tel(String raw) {
+        if (!raw.matches("[+0-9][0-9 ().-]*")) return null;
+        String digits = raw.replaceAll("[ ().-]", "");
+        return digits.length() >= 5 ? "tel:" + digits : null;
     }
 
     /** Text with no control or bidi/format characters, the same admission rule as the site. */
