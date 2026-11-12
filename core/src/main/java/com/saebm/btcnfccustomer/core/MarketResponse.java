@@ -69,7 +69,7 @@ public final class MarketResponse {
             JsonObject row=rows.get(i).getAsJsonObject();
             BigInteger budget=i==0?null:nextBudget.add(step.multiply(BigInteger.valueOf(i-1)));
             JsonObject expected=budget==null?calculator.quote(BigInteger.valueOf(501),null):calculator.calculate(budget.toString(),true);
-            for(String key:new String[]{"principal_sats","network_sats","materials_sats","post_sats","tag_sats","operator_sats","total_sats","total_toman","total_rial","remainder_toman"}) {
+            for(String key:new String[]{"principal_sats","network_sats","materials_sats","post_sats","tag_sats","operator_sats","operator_toman","total_sats","total_toman","total_rial","remainder_toman"}) {
                 if(!integer(row,key).equals(expected.get(key).getAsBigInteger())) throw new IllegalArgumentException("Invalid row");
             }
             equal(expected.get("btc").getAsString(),text(row,"btc"));

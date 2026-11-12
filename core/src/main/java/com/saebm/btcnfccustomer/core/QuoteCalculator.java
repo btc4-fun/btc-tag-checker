@@ -51,7 +51,7 @@ public final class QuoteCalculator {
         row.addProperty("principal_sats",principal); row.addProperty("btc",new BigDecimal(principal,8).toPlainString());
         row.addProperty("network_sats",network); row.addProperty("materials_sats",materials);
         row.addProperty("post_sats",post); row.addProperty("tag_sats",tag);
-        row.addProperty("operator_sats",operator); row.addProperty("total_sats",total);
+        row.addProperty("operator_sats",operator); row.addProperty("operator_toman",ceil(new BigDecimal(operator).multiply(satoshiToman))); row.addProperty("total_sats",total);
         row.addProperty("total_toman",toman); row.addProperty("total_rial",toman.multiply(BigInteger.TEN));
         row.addProperty("budget_toman",budget); row.addProperty("remainder_toman",budget==null?BigInteger.ZERO:budget.subtract(toman));
         return row;

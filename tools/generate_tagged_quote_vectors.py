@@ -85,6 +85,8 @@ def row(principal: int, satoshi_toman: Fraction, network: int, materials: int,
         "post_sats": str(post),
         "tag_sats": str(tag),
         "operator_sats": str(operator),
+        # The operator's income in toman: 15% of the envelope costs, rounded up to a whole toman.
+        "operator_toman": str(ceil_fraction(operator * satoshi_toman)),
         "total_sats": str(total_sats),
         "total_toman": str(total_toman),
         "total_rial": str(total_toman * 10),

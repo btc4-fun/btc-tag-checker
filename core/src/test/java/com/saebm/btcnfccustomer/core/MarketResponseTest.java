@@ -1,5 +1,6 @@
 package com.saebm.btcnfccustomer.core;
 import com.google.gson.*;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -32,5 +33,33 @@ public class MarketResponseTest {
  @Test public void absentPriorityNeverBorrowsEconomy() throws Exception {
   JsonObject obj=JsonParser.parseString(fixture()).getAsJsonObject();obj.getAsJsonObject("quote_options").add("medium",JsonNull.INSTANCE);
   MarketResponse r=MarketResponse.parse(obj.toString(),NOW,0);assertNull(r.option("medium",false));assertNotNull(r.option("economy",true));
+ }
+ @Test public void operatorTomanMustMatchTheLocalComputation() throws Exception {
+  // The site's row carries the operator's income in toman; a missing or faked value must fail closed
+  // instead of being rendered as a zero or an invented amount. Economy is the required table, so a
+  // bad economy row rejects the whole payload; medium and fast are optional and are dropped.
+  for(String speed:new String[]{"economy","medium","fast"}) for(String tag:new String[]{"no_tag","with_tag"}) {
+   boolean required=speed.equals("economy");
+   JsonObject missing=JsonParser.parseString(fixture()).getAsJsonObject();
+   missing.getAsJsonObject("quote_options").getAsJsonObject(speed).getAsJsonObject(tag).getAsJsonArray("rows").get(0).getAsJsonObject().remove("operator_toman");
+   if(required) assertThrows(speed+"/"+tag+" missing",IllegalArgumentException.class,()->MarketResponse.parse(missing.toString(),NOW,0));
+   else assertNull(speed+"/"+tag+" missing",MarketResponse.parse(missing.toString(),NOW,0).option(speed,tag.equals("with_tag")));
+   JsonObject faked=JsonParser.parseString(fixture()).getAsJsonObject();
+   JsonObject row=faked.getAsJsonObject("quote_options").getAsJsonObject(speed).getAsJsonObject(tag).getAsJsonArray("rows").get(0).getAsJsonObject();
+   row.addProperty("operator_toman",row.get("operator_toman").getAsBigInteger().add(BigInteger.ONE));
+   if(required) assertThrows(speed+"/"+tag+" faked",IllegalArgumentException.class,()->MarketResponse.parse(faked.toString(),NOW,0));
+   else assertNull(speed+"/"+tag+" faked",MarketResponse.parse(faked.toString(),NOW,0).option(speed,tag.equals("with_tag")));
+  }
+ }
+ @Test public void operatorTomanIsCeilingOfOperatorSatsTimesSatoshiToman() throws Exception {
+  MarketResponse r=MarketResponse.parse(fixture(),NOW,0);
+  for(String speed:new String[]{"economy","medium","fast"}) for(boolean tag:new boolean[]{false,true}) {
+   QuoteCalculator calculator=r.option(speed,tag).calculator;
+   for(JsonElement element:r.option(speed,tag).rows()) {
+    JsonObject row=element.getAsJsonObject();
+    BigInteger expected=calculator.quote(row.get("principal_sats").getAsBigInteger(),null).get("operator_toman").getAsBigInteger();
+    assertEquals(speed+"/"+tag,expected,row.get("operator_toman").getAsBigInteger());
+   }
+  }
  }
 }

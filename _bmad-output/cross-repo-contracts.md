@@ -118,9 +118,13 @@ network vbytes: 141
 principal range: 501 .. 2100000000000000 satoshis
 table ceiling: 3000000 toman
 cost keys: network_sats, materials_sats, post_sats, tag_sats
+row keys: principal_sats, btc, network_sats, materials_sats, post_sats, tag_sats,
+          operator_sats, operator_toman, total_sats, total_toman, total_rial,
+          budget_toman, remainder_toman
+operator_toman = ceil(operator_sats * satoshi_toman)
 ```
 
-نام کلیدهای هزینه بخشی از قرارداد است: پاسخ با `print_sats` یا با سقف دو میلیون تومان رد می‌شود، نه با مقدار صفر جایگزین. حداقل بسته پانصد و یک ساتوشی است و بودجهٔ کمتر از هزینهٔ همان بسته خطا می‌دهد. بردارهای مستقل این قرارداد در `core/src/test/resources/tagged_quote_vectors.json` هستند و با `tools/generate_tagged_quote_vectors.py` از یک اوراکل `fractions.Fraction` بازتولید می‌شوند؛ آن اوراکل کد محصول را وارد نمی‌کند.
+نام کلیدهای هزینه بخشی از قرارداد است: پاسخ با `print_sats` یا با سقف دو میلیون تومان رد می‌شود، نه با مقدار صفر جایگزین. حداقل بسته پانصد و یک ساتوشی است و بودجهٔ کمتر از هزینهٔ همان بسته خطا می‌دهد. `operator_toman` درآمد گرداننده به تومان است و برنامه آن را از `operator_sats` و نرخ همان لحظه دوباره حساب می‌کند؛ ردیف بدون این کلید یا با مقدار متفاوت پذیرفته نمی‌شود. جدول اقتصادی الزامی است، پس ردیف بد در آن کل پاسخ را رد می‌کند؛ در سرعت‌های متوسط و سریع فقط همان گزینه حذف می‌شود. بردارهای مستقل این قرارداد در `core/src/test/resources/tagged_quote_vectors.json` هستند و با `tools/generate_tagged_quote_vectors.py` از یک اوراکل `fractions.Fraction` بازتولید می‌شوند؛ آن اوراکل کد محصول را وارد نمی‌کند. دو فیکسچر دیگر (`market.json` و `quote_calculator.json`) با `tools/regenerate_market_fixture.py` و `tools/regenerate_quote_calculator_fixture.py` از کد قیمت‌گذاری خود سایت بازتولید می‌شوند، نه با دست‌کاری عدد.
 
 [Source](../core/src/main/java/com/saebm/btcnfccustomer/core/MarketClient.java#L20-L22)
 
