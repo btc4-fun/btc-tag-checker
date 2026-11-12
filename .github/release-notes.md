@@ -3,17 +3,21 @@
 نسخه و کد نصب:
 
 ```text
-1.1.9
-versionCode: 15
+1.1.10
+versionCode: 16
 ```
 
-برنامهٔ مشتری اکنون فهرست لینک‌های عمومی فروشنده را با قاعدهٔ بازتری روی کارت استعلام نشان می‌دهد. هر لینک پروفایل خود فروشنده است؛ پس برخلاف نشانی سایت و تصویر، محدود به میزبان‌های پروژه نیست. آدرس `https` روی هر میزبانی پذیرفته می‌شود (میزبانی که زیرخط دارد، مانند `b_tc4fun_ir.t.me`، هم معتبر است) و مسیرهای تماس `mailto:` و `tel:` هم پشتیبانی می‌شوند. برچسب هر لینک می‌تواند متن کوتاه انسانی مثل «اینستاگرام» یا «ایمیل» باشد و همان‌طور که نوشته شده نمایش داده می‌شود.
+این نسخه دو تغییر دارد: هم‌خوان‌شدن جدول هزینه‌ها با قرارداد تازهٔ سایت، و پایدارکردن خواندن برچسب.
 
-همان قاعدهٔ قبلی حفظ شده است: دکمهٔ «باز کردن» با تأیید صریح کاربر مرورگر را باز می‌کند و برنامه خودش هیچ لینکی را بارگذاری نمی‌کند. کلید `links` در پاسخ سرویس اختیاری است، پس پاسخ‌های قدیمی بدون این کلید هم خوانده می‌شوند و هر کلید ناشناختهٔ دیگر همچنان کل پاسخ را رد می‌کند. ورودی نامعتبر فقط خودش حذف می‌شود، نه کل کارت؛ حداکثر ۲۰ لینک نمایش داده می‌شود. شناسهٔ بسته و سیاست امضا تغییر نکرده‌اند.
+هزینه‌ها: مواد پاکت یازده سنت (مهر سه، کاغذ یک، چاپ یک و پاکت شش سنت)، پست هفتاد و پنج سنت و برچسب دوازده سنت. حداقل بسته از پانصد و یک ساتوشی شروع می‌شود و سقف جدول سه میلیون تومان است. برنامه پاسخ نرخ را پیش از نمایش اعتبارسنجی می‌کند: نام کلیدهای هزینه (`materials_sats` و `post_sats`)، تعداد ردیف‌ها، و برابری هر ردیف با محاسبهٔ همان نرخ. پاسخ ناسازگار کنار گذاشته می‌شود و هیچ قیمت صفر یا جایگزینی ساخته نمی‌شود.
 
-The customer app now shows the seller's public links under a wider rule: a link is the seller's own profile page, so — unlike the site and image URLs — it is not limited to the project's hosts. Any `https` address is accepted (including a host with an underscore such as a `t.me` alias), and `mailto:`/`tel:` contact routes are supported. A label may be short human text such as a Persian name and is shown exactly as written. An explicit consent step still comes first and nothing is fetched into the app; an invalid entry is dropped on its own and at most 20 links are shown. Package id and signing policy are unchanged.
+خواندن برچسب: حالت خوانندهٔ NFC پس از خواندن روشن می‌ماند و فقط با خروج از صفحه آزاد می‌شود. اگر میدان در همان لحظه که برچسب روی گوشی است آزاد شود، اندروید لینک ذخیره‌شده روی برچسب را به مرورگر می‌دهد، این صفحه متوقف می‌شود و نتیجهٔ خواندن از دست می‌رود. هر خواندن نشانهٔ یکتای خودش را دارد و پاسخ دیررسِ خواندن قدیمی کنار گذاشته می‌شود؛ نتیجهٔ تازه را بازنویسی نمی‌کند و درخواستی را که کاربر لغو کرده دوباره فعال نمی‌کند. گارد این رفتار در `core` آزمون رفتاری دارد، نه فقط آزمون متن.
 
-این یادداشت فقط تغییرات و شرط‌های بررسی نسخهٔ ۱.۱.۹ را ثبت می‌کند و به معنی ساخته‌شدن، امضاشدن یا انتشار فایل APK جدید نیست.
+The customer app now matches the site's new cost contract: envelope materials 0.11 USD (0.03 seal, 0.01 paper, 0.01 print, 0.06 envelope), postage 0.75 USD and tag 0.12 USD. The smallest package starts at 501 satoshis and the table ceiling is 3,000,000 toman. Every market response is validated before it is shown — the cost key names (`materials_sats`, `post_sats`), the row count, and each row against the same rates — and a mismatching response is dropped instead of being rendered with a zero or invented price.
+
+NFC reader mode now stays enabled after a read and is released only when the user leaves the screen. Releasing the field while the tag is still against the phone hands the tag's stored link to Android, which opens a browser, pauses this screen and loses the scan. Each scan carries its own immutable token, so a late callback from an older scan is dropped instead of overwriting a newer result or re-enabling a request the user cancelled. That guard lives in `core` and has behavioural unit tests, not only source-text assertions.
+
+این یادداشت فقط تغییرات و شرط‌های بررسی نسخهٔ ۱.۱.۱۰ را ثبت می‌کند و به معنی ساخته‌شدن، امضاشدن یا انتشار فایل APK جدید نیست.
 
 آزمون سیاست پنجره در همان دروازهٔ شبیه‌ساز میزبانی‌شده اجرا می‌شود. این آزمون روی پنجرهٔ واقعی شبیه‌ساز سیاست انتشار و راه‌اندازی فعالیت آزمایشی را بررسی می‌کند؛ اثبات اجرای بسته روی گوشی نیست.
 
@@ -21,4 +25,4 @@ The customer app now shows the seller's public links under a wider rule: a link 
 
 اجرای دستی امضاشده باید پیش از ساخت برچسب عمومی موفق شود. آزمون میزبان و بررسی ایستا و وابستگی سخت‌گیرانه در هر دو نوع ساخت اجرا می‌شوند. شناسهٔ بسته و گواهی ثابت تغییر نکرده‌اند. گزارش اجرای واقعی و فایل دانلودشده معیار پذیرش‌اند؛ این یادداشت به‌تنهایی موفقیت آن‌ها را اعلام نمی‌کند.
 
-گوشی و تگ فیزیکی، ارتقای نصب تولیدی و حداقل نسخهٔ اندروید در این دور آزموده نشده‌اند. آزمون شبیه‌ساز با آزمون گوشی واقعی تفاوت دارد. نبود کلید معتبر باعث توقف می‌شود و هیچ کلیدی ساخته یا به دستگاه محلی منتقل نمی‌شود.
+گوشی و تگ فیزیکی، ارتقای نصب تولیدی و حداقل نسخهٔ اندروید در این دور آزموده نشده‌اند. خواندن فیزیکی برچسب و رفتار میدان NFC روی گوشی واقعی تأیید نشده است؛ آزمون خودکار فقط منطق گارد را می‌سنجد. آزمون شبیه‌ساز با آزمون گوشی واقعی تفاوت دارد. نبود کلید معتبر باعث توقف می‌شود و هیچ کلیدی ساخته یا به دستگاه محلی منتقل نمی‌شود.

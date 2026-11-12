@@ -105,22 +105,49 @@ links: object; <= 20 accepted entries; label <= 32; value <= 512
 
 ## نرخ و محتوای عمومی
 
-مسیر نرخ از سایت دریافت می‌شود؛ نشانی‌های منبع قیمت و کارمزد در پاسخ باید با ثابت‌های هسته تطبیق کنند. جدول اقتصادی الزامی است؛ انتخاب‌های متوسط و سریع فقط در صورت معتبر بودن پذیرفته می‌شوند. ضریب صرافی، گرداننده، چاپ، برچسب، اندازهٔ فرضی تراکنش و گردکردن باید با سایت و بردارهای مشترک تطبیق شوند؛ تغییر در متن بدون تغییر محاسبه کافی نیست.
+مسیر نرخ از سایت دریافت می‌شود؛ نشانی‌های منبع قیمت و کارمزد در پاسخ باید با ثابت‌های هسته تطبیق کنند. جدول اقتصادی الزامی است؛ انتخاب‌های متوسط و سریع فقط در صورت معتبر بودن پذیرفته می‌شوند. ضریب صرافی، گرداننده، مواد پاکت، پست، برچسب، اندازهٔ فرضی تراکنش و گردکردن باید با سایت و بردارهای مشترک تطبیق شوند؛ تغییر در متن بدون تغییر محاسبه کافی نیست.
 
 ```text
 GET https://btc4.fun/api/market
 exchange adjustment: 1.005
 operator: ceil(subtotal * 15 / 100)
-print USD: 0.15
+materials USD: 0.11  (seal 0.03 + paper 0.01 + print 0.01 + envelope 0.06)
+post USD: 0.75
 optional tag USD: 0.12
 network vbytes: 141
+principal range: 501 .. 2100000000000000 satoshis
+table ceiling: 3000000 toman
+cost keys: network_sats, materials_sats, post_sats, tag_sats
 ```
+
+نام کلیدهای هزینه بخشی از قرارداد است: پاسخ با `print_sats` یا با سقف دو میلیون تومان رد می‌شود، نه با مقدار صفر جایگزین. حداقل بسته پانصد و یک ساتوشی است و بودجهٔ کمتر از هزینهٔ همان بسته خطا می‌دهد. بردارهای مستقل این قرارداد در `core/src/test/resources/tagged_quote_vectors.json` هستند و با `tools/generate_tagged_quote_vectors.py` از یک اوراکل `fractions.Fraction` بازتولید می‌شوند؛ آن اوراکل کد محصول را وارد نمی‌کند.
 
 [Source](../core/src/main/java/com/saebm/btcnfccustomer/core/MarketClient.java#L20-L22)
 
 [Source](../core/src/main/java/com/saebm/btcnfccustomer/core/MarketResponse.java#L51-L101)
 
 [Source](../core/src/main/java/com/saebm/btcnfccustomer/core/QuoteCalculator.java#L24-L54)
+
+[Source](../tools/generate_tagged_quote_vectors.py)
+
+## خواندن برچسب و حالت خوانندهٔ NFC
+
+حالت خواننده پس از خواندن برچسب روشن می‌ماند و فقط با خروج از صفحه آزاد می‌شود. آزادکردن میدان در همان لحظه که برچسب روی گوشی است، لینک ذخیره‌شده روی برچسب را به اندروید می‌دهد؛ مرورگر باز می‌شود، این صفحه متوقف می‌شود و نتیجهٔ خواندن از دست می‌رود. هر خواندن نشانهٔ یکتای خودش را دارد و پاسخ دیررسِ خواندن قدیمی کنار گذاشته می‌شود.
+
+```text
+begin()  -> token (unique per scan, never reused)
+accepts(token, active, inquiry, busy) -> active && inquiry && !busy && waiting && token == generation
+stop()   -> invalidates every outstanding token
+consumed() -> one read per scan
+```
+
+این گارد در `core` است و آزمون رفتاری دارد؛ آزمون متن مبدأ جای آن را نمی‌گیرد. خواندن فیزیکی برچسب و رفتار میدان روی گوشی واقعی با این آزمون‌ها تأیید نمی‌شود.
+
+[Source](../core/src/main/java/com/saebm/btcnfccustomer/core/ScanGate.java)
+
+[Source](../core/src/test/java/com/saebm/btcnfccustomer/core/ScanGateTest.java)
+
+[Source](../app/src/main/java/com/saebm/btcnfccustomer/MainActivity.java#L329-L360)
 
 قرارداد منبع بستهٔ آفلاین، پوشهٔ قالب عمومی زیر ریشهٔ صریح مخزن سایت است. قالب تماس باید برای هر راه اجتماعی یک مقصد بدون ابهام بدهد. تولید بسته، اقدام جداگانه و تغییردهندهٔ دارایی‌هاست و اینجا انجام نشده است.
 

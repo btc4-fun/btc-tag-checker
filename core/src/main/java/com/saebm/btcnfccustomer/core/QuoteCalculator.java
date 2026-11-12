@@ -8,11 +8,11 @@ import java.math.RoundingMode;
 /** Exact decimal/integer pricing. No binary floating point, network, or persisted inputs. */
 public final class QuoteCalculator {
     public static final BigInteger MAX = new BigInteger("2100000000000000");
-    private static final BigInteger MIN = BigInteger.valueOf(500);
+    private static final BigInteger MIN = BigInteger.valueOf(501);
     public final BigDecimal satoshiToman;
-    public final BigInteger network, printing, tag;
-    private QuoteCalculator(BigDecimal sat, BigInteger network, BigInteger printing, BigInteger tag) {
-        this.satoshiToman = sat; this.network = network; this.printing = printing; this.tag = tag;
+    public final BigInteger network, materials, post, tag;
+    private QuoteCalculator(BigDecimal sat, BigInteger network, BigInteger materials, BigInteger post, BigInteger tag) {
+        this.satoshiToman = sat; this.network = network; this.materials = materials; this.post = post; this.tag = tag;
     }
     static BigDecimal rate(String value, String maximum) {
         if (value == null || value.length() > 64 || !value.matches("[0-9]+(?:\\.[0-9]{1,18})?")) throw new IllegalArgumentException("Invalid rate");
@@ -25,7 +25,8 @@ public final class QuoteCalculator {
         BigDecimal sat = rate(btc,"1000000000000000").multiply(new BigDecimal("1.005")).movePointLeft(8);
         BigDecimal dollar = rate(usdt,"1000000000000000").multiply(new BigDecimal("1.005"));
         return new QuoteCalculator(sat, ceil(rate(fee,"10000").multiply(new BigDecimal("141"))),
-            dollar.multiply(new BigDecimal("0.15")).divide(sat,0,RoundingMode.CEILING).toBigIntegerExact(),
+            dollar.multiply(new BigDecimal("0.11")).divide(sat,0,RoundingMode.CEILING).toBigIntegerExact(),
+            dollar.multiply(new BigDecimal("0.75")).divide(sat,0,RoundingMode.CEILING).toBigIntegerExact(),
             withTag ? dollar.multiply(new BigDecimal("0.12")).divide(sat,0,RoundingMode.CEILING).toBigIntegerExact() : BigInteger.ZERO);
     }
     public JsonObject calculate(String input, boolean budget) {
@@ -43,12 +44,13 @@ public final class QuoteCalculator {
     }
     public JsonObject quote(BigInteger principal, BigInteger budget) {
         if (principal.compareTo(MIN)<0 || principal.compareTo(MAX)>0) throw new IllegalArgumentException("Principal outside supply bounds");
-        BigInteger subtotal=principal.add(network).add(printing).add(tag);
+        BigInteger subtotal=principal.add(network).add(materials).add(post).add(tag);
         BigInteger operator=subtotal.multiply(BigInteger.valueOf(15)).add(BigInteger.valueOf(99)).divide(BigInteger.valueOf(100));
         BigInteger total=subtotal.add(operator), toman=ceil(new BigDecimal(total).multiply(satoshiToman));
         JsonObject row=new JsonObject();
         row.addProperty("principal_sats",principal); row.addProperty("btc",new BigDecimal(principal,8).toPlainString());
-        row.addProperty("network_sats",network); row.addProperty("print_sats",printing); row.addProperty("tag_sats",tag);
+        row.addProperty("network_sats",network); row.addProperty("materials_sats",materials);
+        row.addProperty("post_sats",post); row.addProperty("tag_sats",tag);
         row.addProperty("operator_sats",operator); row.addProperty("total_sats",total);
         row.addProperty("total_toman",toman); row.addProperty("total_rial",toman.multiply(BigInteger.TEN));
         row.addProperty("budget_toman",budget); row.addProperty("remainder_toman",budget==null?BigInteger.ZERO:budget.subtract(toman));

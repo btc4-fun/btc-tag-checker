@@ -21,10 +21,31 @@ class AppContract(unittest.TestCase):
   source = ROOT / 'app/src/main/java/com/saebm/btcnfccustomer/MainActivity.java'
   self.assertTrue(source.exists(), 'Native UI missing')
   text=source.read_text()
-  for required in ['tag.getId()', 'enableReaderMode', 'FLAG_READER_SKIP_NDEF_CHECK','onPause()', 'gate.invalidate()', 'gate.accepts(', 'new Client()', 'setPositiveButton', 'setTextDirection', 'ACTION_VIEW', 'BROWSABLE', 'scanGeneration != scanToken']:
+  for required in ['tag.getId()', 'enableReaderMode', 'FLAG_READER_SKIP_NDEF_CHECK','onPause()', 'gate.invalidate()', 'gate.accepts(', 'new Client()', 'setPositiveButton', 'setTextDirection', 'ACTION_VIEW', 'BROWSABLE', 'scanGate.accepts(token, active, inquiry, busy)']:
    self.assertIn(required,text)
   for forbidden in ['WebView','Ndef.write','writeNdefMessage','Log.', 'SharedPreferences', 'getSharedPreferences']:
    self.assertNotIn(forbidden,text)
+ def test_reader_mode_survives_a_read_so_the_tag_link_never_opens_a_browser(self):
+  # A tag that also stores a link must not hand that link to Android while the user is scanning.
+  text = (ROOT / 'app/src/main/java/com/saebm/btcnfccustomer/MainActivity.java').read_text()
+  read = text.split('private void onTagRead')[1].split('private void startQrScanner')[0]
+  self.assertNotIn('stopReading()', read, 'releasing reader mode inside the read callback re-dispatches the tag link')
+  self.assertNotIn('disableReaderMode', read)
+  # The callback must be gated by the per-scan token, not by a shared mutable field that the next
+  # scan overwrites. ScanGateTest in :core proves the accept/reject behaviour itself.
+  self.assertIn('scanGate.accepts(token, active, inquiry, busy)', read)
+  self.assertIn('scanGate.consumed()', read)
+  self.assertNotIn('scanToken', text, 'a shared token field lets a late callback compare equal to a newer scan')
+  begin = text.split('private void beginScan')[1].split('private void onTagRead')[0]
+  self.assertIn('final long token = scanGate.begin()', begin)
+  self.assertIn('onTagRead(tag, token)', begin)
+  # The field is released only by leaving the screen, and the flag tracks the real adapter state.
+  stop = text.split('private void stopReading')[1].split('private void confirmRequest')[0]
+  self.assertIn('scanGate.stop()', stop)
+  self.assertIn('readerOn', stop)
+  self.assertIn('disableReaderMode', stop)
+  self.assertIn('readerOn = true', text)
+  self.assertIn('readerOn = false', text)
  def test_offline_pages_and_exact_payment_snapshot(self):
   assets=ROOT/'app/src/main/assets/public'
   for page in ['guide','terms','payment','security','costs']:

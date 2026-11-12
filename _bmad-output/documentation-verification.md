@@ -68,3 +68,37 @@ python3 tools/verify_apk.py debug
 - شکاف واحد زمان، نبود الزام موجودی در تجزیه‌گر، ناهمخوانی پیوند تماس و شکل پاسخ خطا، یافته‌های استاتیک‌اند؛ برای تبدیل به عیب تأییدشده به کار جداگانه و اجرای مجاز نیاز دارند.
 
 [Contracts](cross-repo-contracts.md)
+
+## نوبت اجرا و انتشار ۱.۱.۱۰
+
+این بخش نتیجهٔ اجرای واقعی همین نوبت است و جای بخش‌های بالا را نمی‌گیرد؛ بخش‌های بالا وضعیت پیش از اجرا را ثبت می‌کنند.
+
+فرمان‌های اجراشده و نتیجهٔ واقعی آن‌ها:
+
+```sh
+python3 tools/sync_public_content.py --check          # Bundled snapshot verified
+python3 -m unittest discover -s tests -q              # Ran 50 tests, OK
+./gradlew :core:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+                                                      # BUILD SUCCESSFUL, 53 tasks
+python3 tools/verify_apk.py debug                     # versionCode 16, 1.1.10-test-only
+git diff --check                                      # clean
+```
+
+شمارش آزمون‌های هسته از گزارش XML: ۶۰ آزمون، صفر شکست. `ScanGateTest` پنج آزمون رفتاری دارد و `QuoteCalculatorTest` سه آزمون. آزمون جهش انجام شد: بازگرداندن حداقل به ۵۰۰ ساتوشی هر سه آزمون `QuoteCalculatorTest` را شکست، پس بردارها واقعاً قرارداد را می‌سنجند.
+
+`tools/generate_tagged_quote_vectors.py --check` بردارهای مستقل را از یک اوراکل `fractions.Fraction` بازتولید می‌کند و کد محصول را وارد نمی‌کند؛ بردارهای بودجه با جست‌وجوی دودویی معکوس خود اوراکل ساخته می‌شوند، نه با گذاشتن بودجه به‌جای اصل مبلغ.
+
+آنچه تأیید نشده است: خواندن فیزیکی برچسب، رفتار میدان NFC روی گوشی واقعی، ارتقای نصب تولیدی و اجرای شبیه‌ساز. این‌ها با آزمون میزبان اثبات نمی‌شوند.
+
+## فراخوانی bmad-help در همین مخزن
+
+کاتالوگ محلی و پیکربندی حل‌شده بررسی شدند:
+
+```text
+_bmad/_config/bmad-help.csv
+_bmad/scripts/resolve_config.py --project-root .
+```
+
+نتیجهٔ ارزیابی وضعیت: در `_bmad-output` فقط سندهای زمینه و قرارداد وجود دارد؛ `planning-artifacts` و `implementation-artifacts` خالی‌اند. یعنی دروازه‌های الزامی کاتالوگ (`bmad-prd`، `bmad-architecture`، `bmad-create-epics-and-stories`، `bmad-sprint-planning`) برای این مخزن اجرا نشده‌اند و کار جاری در مرحلهٔ `ship` به‌صورت موردی پیش رفته است. این وضعیت ثبت می‌شود و ادعای تکمیل برنامه‌ریزی نمی‌شود.
+
+گام بعدی پیشنهادی طبق کاتالوگ، به ترتیب: `bmad-prd` سپس `bmad-architecture` و `bmad-create-epics-and-stories` و `bmad-sprint-planning` تا `bmad-build`؛ و برای همین تغییر منتشرشده `bmad-code-review` یا `bmad-walkthrough` به‌صورت اختیاری.

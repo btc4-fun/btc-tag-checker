@@ -14,6 +14,7 @@ import com.saebm.btcnfccustomer.core.QrPayload;
 import com.saebm.btcnfccustomer.core.BitcoinAddress;
 import com.saebm.btcnfccustomer.core.LookupClient;
 import android.nfc.NfcAdapter;
+import android.nfc.Tag;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -34,6 +35,7 @@ import android.widget.EditText;
 import com.saebm.btcnfccustomer.core.Latest;
 import com.saebm.btcnfccustomer.core.RequestPolicy;
 import com.saebm.btcnfccustomer.core.Response;
+import com.saebm.btcnfccustomer.core.ScanGate;
 import com.saebm.btcnfccustomer.core.Uid;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
@@ -64,8 +66,12 @@ public final class MainActivity extends Activity {
     private TextView status;
     private Button scan, request, next;
     private String uid, cursor, qrAddress, qrUrl;
-    private boolean active, scanning, busy, inquiry = true;
-    private long retryUntil, scanGeneration;
+    private boolean active, busy, inquiry = true;
+    /** True while this activity holds the NFC field, so Android never hands the tag's link to a browser. */
+    private boolean readerOn;
+    /** Owns the per-scan token and the "waiting for a tag" state; see ScanGate. */
+    private final ScanGate scanGate = new ScanGate();
+    private long retryUntil;
     private Runnable countdown;
     private AlertDialog consent;
     private final Latest marketGate = new Latest();
@@ -314,6 +320,7 @@ public final class MainActivity extends Activity {
     }
     private void updateButtons() {
         if (!inquiry || scan == null) return;
+        boolean scanning = scanGate.waiting();
         scan.setEnabled(active && !busy && nfc != null && nfc.isEnabled());
         request.setEnabled(active && uid != null && !busy && !scanning);
         next.setEnabled(active && uid != null && cursor != null && !busy && !scanning);
@@ -323,23 +330,35 @@ public final class MainActivity extends Activity {
     private void beginScan() {
         cancelRequest(); uid = null; cursor = null; cursors.clear(); result.removeAllViews();
         if (nfc == null || !nfc.isEnabled()) { status.setText("گوشی نمی‌تواند برچسب را بخواند. تنظیمات ارتباط نزدیک را بررسی کنید."); return; }
-        final long scanToken = ++scanGeneration;
-        scanning = true; status.setText("پشت گوشی را نزدیک برچسب نگه دارید. فقط شمارهٔ آن خوانده می‌شود. هنوز چیزی به اینترنت ارسال نشده است.");
+        final long token = scanGate.begin();
+        status.setText("پشت گوشی را نزدیک برچسب نگه دارید. فقط شمارهٔ آن خوانده می‌شود. هنوز چیزی به اینترنت ارسال نشده است.");
         updateButtons();
         try {
-            nfc.enableReaderMode(this, tag -> {
-                String value;
-                try { value = Uid.format(tag.getId()); }
-                catch (IllegalArgumentException ex) { value = null; }
-                final String scanned = value;
-                main.post(() -> {
-                    if (!active || !scanning || !inquiry || scanGeneration != scanToken) return;
-                    stopReading(); uid = scanned;
-                    status.setText(scanned == null ? "این نوع برچسب قابل خواندن نیست. چیزی ارسال نشد." : "برچسب خوانده شد. برای ادامه، دکمهٔ دیدن موجودی و تراکنش‌ها را بزنید.");
-                    updateButtons();
-                });
-            }, NfcAdapter.FLAG_READER_NFC_A | NfcAdapter.FLAG_READER_NFC_B | NfcAdapter.FLAG_READER_NFC_F | NfcAdapter.FLAG_READER_NFC_V | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK, null);
-        } catch (IllegalStateException | SecurityException ex) { scanning = false; status.setText("خواندن برچسب شروع نشد. تنظیمات گوشی را بررسی کنید."); updateButtons(); }
+            nfc.enableReaderMode(this, tag -> onTagRead(tag, token),
+                NfcAdapter.FLAG_READER_NFC_A | NfcAdapter.FLAG_READER_NFC_B | NfcAdapter.FLAG_READER_NFC_F | NfcAdapter.FLAG_READER_NFC_V | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK, null);
+            readerOn = true;
+        } catch (IllegalStateException | SecurityException ex) { scanGate.stop(); readerOn = false; status.setText("خواندن برچسب شروع نشد. تنظیمات گوشی را بررسی کنید."); updateButtons(); }
+    }
+    /**
+     * Reader mode deliberately stays on after a read. Releasing it while the tag is still against the
+     * phone hands the tag's stored link to Android, which opens a browser, pauses this screen and
+     * loses the scan. The field is released only when the user leaves the screen.
+     *
+     * The token is captured per scan and never read from a shared field: a callback that arrives
+     * after a newer scan started, or after the screen was left, must be dropped instead of
+     * overwriting the newer result. ScanGate owns that decision and is unit-tested in core.
+     */
+    private void onTagRead(Tag tag, long token) {
+        String value;
+        try { value = Uid.format(tag.getId()); }
+        catch (IllegalArgumentException ex) { value = null; }
+        final String scanned = value;
+        main.post(() -> {
+            if (!scanGate.accepts(token, active, inquiry, busy)) return;
+            scanGate.consumed(); uid = scanned;
+            status.setText(scanned == null ? "این نوع برچسب قابل خواندن نیست. چیزی ارسال نشد." : "برچسب خوانده شد. برای ادامه، دکمهٔ دیدن موجودی و تراکنش‌ها را بزنید.");
+            updateButtons();
+        });
     }
     private void startQrScanner() {
         if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
@@ -516,11 +535,11 @@ public final class MainActivity extends Activity {
             .setNegativeButton("لغو", null).setPositiveButton("باز کردن", (d,w) -> { Intent i=new Intent(Intent.ACTION_VIEW,Uri.parse(qrUrl)); i.addCategory(Intent.CATEGORY_BROWSABLE); try { startActivity(i); } catch(ActivityNotFoundException ignored) { status.setText("مرورگری برای باز کردن لینک پیدا نشد."); } }).show();
     }
     private void stopReading() {
-        scanGeneration++;
-        if (nfc != null && scanning) {
+        scanGate.stop();
+        if (nfc != null && readerOn) {
             try { nfc.disableReaderMode(this); } catch (IllegalStateException | SecurityException ignored) { }
         }
-        scanning = false;
+        readerOn = false;
     }
     private void confirmRequest(String after) {
         if (uid == null || busy || !active) return;
@@ -749,10 +768,10 @@ public final class MainActivity extends Activity {
             Button b=button(choices,labels[i],()->{speed=selected;renderMarket();},false);b.setTag("speed-"+selected);
         }
         button(choices,"بدون برچسب؛ تغییر انتخاب",()->{includeTag=!includeTag;renderMarket();},false).setTag("tag-choice");
-        text(choices,"سرعت‌ها فقط اولویت پیشنهادی‌اند، نه تضمین زمان تأیید. چاپ پانزده سنت و برچسب دوازده سنت با فرض هر تتر برابر یک دلار برآورد می‌شوند. کارمزد گرداننده پانزده درصدِ اصل و هزینه‌هاست. نرخ صرافی نیم درصد تعدیل دارد.",false);
+        text(choices,"سرعت‌ها فقط اولویت پیشنهادی‌اند، نه تضمین زمان تأیید. مواد پاکت یازده سنت (مهر سه، کاغذ یک، چاپ یک و پاکت شش سنت)، پست هفتاد و پنج سنت و برچسب دوازده سنت با فرض هر تتر برابر یک دلار برآورد می‌شوند. کارمزد گرداننده پانزده درصدِ اصل و هزینه‌هاست. نرخ صرافی نیم درصد تعدیل دارد.",false);
         marketTable=section("market-table","جدول برآورد",false);
         LinearLayout custom=section("custom-quote","محاسبهٔ مبلغ دلخواه",true);
-        text(custom,"عدد صحیح مثبت با ارقام انگلیسی، بدون فاصله، جداکننده، اعشار یا صفر ابتدایی؛ حداکثر سی‌ودو رقم. اصل مبلغ از پانصد ساتوشی تا سقف بیست‌ویک میلیون بیت‌کوین است.",false);
+        text(custom,"عدد صحیح مثبت با ارقام انگلیسی، بدون فاصله، جداکننده، اعشار یا صفر ابتدایی؛ حداکثر سی‌ودو رقم. اصل مبلغ از پانصد و یک ساتوشی تا سقف بیست‌ویک میلیون بیت‌کوین است.",false);
         button(custom,"اصل ساتوشی؛ تغییر حالت",()->{budgetMode=!budgetMode;clearCustom();},false).setTag("budget-choice");
         amount=new EditText(this); amount.setTag("quote-amount");amount.setSaveEnabled(false);
         amount.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);amount.setTextDirection(View.TEXT_DIRECTION_LTR);
@@ -867,8 +886,8 @@ public final class MainActivity extends Activity {
         } catch(IllegalArgumentException invalid) {text(customResult,"مقدار معتبر نیست یا بودجه برای حداقل بسته کافی نیست. محدودیت ارقام و اصل مبلغ را بررسی کنید.",false);}
     }
     private void renderQuote(LinearLayout parent,JsonObject row) {
-        String[] fields={"principal_sats","btc","network_sats","print_sats","tag_sats","operator_sats","total_sats","total_toman","total_rial","budget_toman","remainder_toman"};
-        String[] labels={"اصل؛ ساتوشی","معادل بیت‌کوین","شبکه؛ ساتوشی","چاپ؛ ساتوشی","برچسب؛ ساتوشی","گرداننده؛ ساتوشی","جمع؛ ساتوشی","جمع پرداختی؛ تومان","معادل ریال","بودجه؛ تومان","باقی‌مانده؛ تومان — جزو موجودی پاکت نیست"};
+        String[] fields={"principal_sats","btc","network_sats","materials_sats","post_sats","tag_sats","operator_sats","total_sats","total_toman","total_rial","budget_toman","remainder_toman"};
+        String[] labels={"اصل؛ ساتوشی","معادل بیت‌کوین","شبکه؛ ساتوشی","مواد پاکت؛ ساتوشی","پست؛ ساتوشی","برچسب؛ ساتوشی","گرداننده؛ ساتوشی","جمع؛ ساتوشی","جمع پرداختی؛ تومان","معادل ریال","بودجه؛ تومان","باقی‌مانده؛ تومان — جزو موجودی پاکت نیست"};
         for(int i=0;i<fields.length;i++) if(!row.get(fields[i]).isJsonNull()) {text(parent,labels[i],false);text(parent,row.get(fields[i]).getAsString(),true);}
     }
     private void openPublic(String page) {

@@ -52,7 +52,7 @@ Android Gradle Plugin 8.7.0
 compileSdk / targetSdk 35
 minSdk 26
 buildToolsVersion 36.0.0
-app versionName 1.1.9 / versionCode 15
+app versionName 1.1.10 / versionCode 16
 Gson 2.11.0 / OkHttp 4.12.0 / ZXing embedded 4.3.0
 ```
 

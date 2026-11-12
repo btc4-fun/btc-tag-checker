@@ -6,7 +6,7 @@ android {
     buildFeatures { buildConfig true }
     compileSdk 35
     buildToolsVersion '36.0.0'
-    defaultConfig { applicationId 'com.saebm.btcnfccustomer'; minSdk 26; targetSdk 35; versionCode 15; versionName '1.1.9'; testInstrumentationRunner 'com.saebm.btcnfccustomer.VisualInstrumentation' }
+    defaultConfig { applicationId 'com.saebm.btcnfccustomer'; minSdk 26; targetSdk 35; versionCode 16; versionName '1.1.10'; testInstrumentationRunner 'com.saebm.btcnfccustomer.VisualInstrumentation' }
     signingConfigs {
         if (releaseReady) {
             release {
