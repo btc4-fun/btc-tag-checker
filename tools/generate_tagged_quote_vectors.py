@@ -12,11 +12,12 @@ Contract mirrored (site pricing.py, customer app QuoteCalculator):
   adjusted_usdt  = usdt_toman * 1.005
   satoshi_toman  = adjusted_btc / 100_000_000
   network_sats   = ceil(fee_rate * 141)
-  materials_sats = ceil(0.11 * adjusted_usdt / satoshi_toman)
-  post_sats      = ceil(0.75 * adjusted_usdt / satoshi_toman)
+  materials_sats = ceil(0.05 * adjusted_usdt / satoshi_toman)   # seal + paper + print, always
+  envelope_sats  = ceil(0.06 * adjusted_usdt / satoshi_toman)   # postal only
+  post_sats      = ceil(0.75 * adjusted_usdt / satoshi_toman)   # postal only
   tag_sats       = ceil(0.12 * adjusted_usdt / satoshi_toman) if include_tag else 0
-  operator_sats  = ceil(0.15 * (principal + network + materials + post + tag))
-  total_toman    = ceil((principal + network + materials + post + tag + operator) * satoshi_toman)
+  operator_sats  = ceil(0.15 * (principal + network + materials + envelope + post + tag))
+  total_toman    = ceil((principal + network + materials + envelope + post + tag + operator) * satoshi_toman)
   total_rial     = total_toman * 10
   principal range: 501 .. 21_000_000 * 100_000_000 satoshis
 
@@ -61,10 +62,11 @@ def costs(btc_toman: str, usdt_toman: str, fee_rate: str, include_tag: bool):
     adjusted_usdt = exact(usdt_toman) * Fraction(1005, 1000)
     satoshi_toman = adjusted_btc / SATOSHIS_PER_BTC
     network = ceil_fraction(exact(fee_rate) * 141)
-    materials = ceil_fraction(Fraction(11, 100) * adjusted_usdt / satoshi_toman)
+    materials = ceil_fraction(Fraction(5, 100) * adjusted_usdt / satoshi_toman)
+    envelope = ceil_fraction(Fraction(6, 100) * adjusted_usdt / satoshi_toman)
     post = ceil_fraction(Fraction(75, 100) * adjusted_usdt / satoshi_toman)
     tag = ceil_fraction(Fraction(12, 100) * adjusted_usdt / satoshi_toman) if include_tag else 0
-    return satoshi_toman, network, materials, post, tag
+    return satoshi_toman, network, materials, envelope, post, tag
 
 
 def btc_text(principal: int) -> str:
@@ -72,8 +74,8 @@ def btc_text(principal: int) -> str:
 
 
 def row(principal: int, satoshi_toman: Fraction, network: int, materials: int,
-        post: int, tag: int, budget: int | None = None) -> dict:
-    subtotal = principal + network + materials + post + tag
+        envelope: int, post: int, tag: int, budget: int | None = None) -> dict:
+    subtotal = principal + network + materials + envelope + post + tag
     operator = ceil_fraction(Fraction(15, 100) * subtotal)
     total_sats = subtotal + operator
     total_toman = ceil_fraction(total_sats * satoshi_toman)
@@ -82,6 +84,7 @@ def row(principal: int, satoshi_toman: Fraction, network: int, materials: int,
         "btc": btc_text(principal),
         "network_sats": str(network),
         "materials_sats": str(materials),
+        "envelope_sats": str(envelope),
         "post_sats": str(post),
         "tag_sats": str(tag),
         "operator_sats": str(operator),
@@ -96,19 +99,19 @@ def row(principal: int, satoshi_toman: Fraction, network: int, materials: int,
 
 
 def total_toman(principal: int, satoshi_toman: Fraction, network: int, materials: int,
-                post: int, tag: int) -> int:
-    subtotal = principal + network + materials + post + tag
+                envelope: int, post: int, tag: int) -> int:
+    subtotal = principal + network + materials + envelope + post + tag
     operator = ceil_fraction(Fraction(15, 100) * subtotal)
     return ceil_fraction((subtotal + operator) * satoshi_toman)
 
 
-def invert_budget(budget: int, satoshi_toman: Fraction, network: int, materials: int,
+def invert_budget(budget: int, satoshi_toman: Fraction, network: int, materials: int, envelope: int,
                   post: int, tag: int) -> int:
     """Largest principal in [501, MAX] whose total_toman fits the budget."""
     low, high = MIN_SATOSHIS, MAX_SATOSHIS
     while low < high:
         middle = (low + high + 1) // 2
-        if total_toman(middle, satoshi_toman, network, materials, post, tag) <= budget:
+        if total_toman(middle, satoshi_toman, network, materials, envelope, post, tag) <= budget:
             low = middle
         else:
             high = middle - 1
@@ -116,23 +119,23 @@ def invert_budget(budget: int, satoshi_toman: Fraction, network: int, materials:
 
 
 def principal_case(rates: dict, principal: int, include_tag: bool = True) -> dict:
-    satoshi_toman, network, materials, post, tag = costs(
+    satoshi_toman, network, materials, envelope, post, tag = costs(
         rates["btc_toman"], rates["usdt_toman"], rates["fee_rate"], include_tag)
     return {
         "inputs": {**rates, "principal_sats": str(principal), "include_tag": include_tag},
         "mode": "principal",
-        "expected": row(principal, satoshi_toman, network, materials, post, tag),
+        "expected": row(principal, satoshi_toman, network, materials, envelope, post, tag),
     }
 
 
 def budget_case(rates: dict, budget: int, include_tag: bool = True) -> dict:
-    satoshi_toman, network, materials, post, tag = costs(
+    satoshi_toman, network, materials, envelope, post, tag = costs(
         rates["btc_toman"], rates["usdt_toman"], rates["fee_rate"], include_tag)
-    principal = invert_budget(budget, satoshi_toman, network, materials, post, tag)
+    principal = invert_budget(budget, satoshi_toman, network, materials, envelope, post, tag)
     return {
         "inputs": {**rates, "budget_toman": str(budget), "include_tag": include_tag},
         "mode": "budget",
-        "expected": row(principal, satoshi_toman, network, materials, post, tag, budget),
+        "expected": row(principal, satoshi_toman, network, materials, envelope, post, tag, budget),
     }
 
 
@@ -148,10 +151,10 @@ def error_case(rates: dict, mode: str, value: int, reason: str, include_tag: boo
 def build() -> dict:
     cases: list[dict] = []
     for rates in RATE_SETS:
-        satoshi_toman, network, materials, post, tag = costs(
+        satoshi_toman, network, materials, envelope, post, tag = costs(
             rates["btc_toman"], rates["usdt_toman"], rates["fee_rate"], True)
-        minimum_total = total_toman(MIN_SATOSHIS, satoshi_toman, network, materials, post, tag)
-        maximum_total = total_toman(MAX_SATOSHIS, satoshi_toman, network, materials, post, tag)
+        minimum_total = total_toman(MIN_SATOSHIS, satoshi_toman, network, materials, envelope, post, tag)
+        maximum_total = total_toman(MAX_SATOSHIS, satoshi_toman, network, materials, envelope, post, tag)
         cases.extend([
             principal_case(rates, MIN_SATOSHIS),
             principal_case(rates, 3000),
@@ -171,7 +174,7 @@ def build() -> dict:
         "contract": {
             "principal": "501 <= principal_sats <= 2100000000000000",
             "budget": "largest principal in [501, 2100000000000000] whose total_toman fits; below the 501-satoshi package it is an error",
-            "costs": "materials 0.11 USD, post 0.75 USD, tag 0.12 USD, network ceil(fee_rate*141), operator ceil(0.15*subtotal)",
+            "costs": "materials 0.05 USD, envelope 0.06 USD, post 0.75 USD, tag 0.12 USD, network ceil(fee_rate*141), operator ceil(0.15*subtotal)",
         },
         "cases": cases,
     }

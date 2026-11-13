@@ -83,7 +83,7 @@ public final class MainActivity extends Activity {
     private Button serialSubmit, addressSubmit;
     private MarketClient marketClient;
     private MarketResponse market;
-    private boolean costsPage, includeTag, budgetMode;
+    private boolean costsPage, includeTag, inPerson, budgetMode;
     private String speed = "economy";
     private LinearLayout marketTable, customResult;
     private TextView marketStatus;
@@ -298,6 +298,8 @@ public final class MainActivity extends Activity {
         LinearLayout groups = section("group-section", "راهنما و ارتباطات", false);
         groupButton(groups, "group-learn-button", "امنیت، آموزش و شرایط", this::showLearnGroup);
         groupButton(groups, "group-contact-button", "اطلاعات پرداخت و تماس", this::showContactGroup);
+        Button costs = button(groups, "قیمت و هزینه‌ها", this::showCosts, false);
+        costs.setTag("home-costs");
         TextView footer = text(content, "برای یاد گرفتن و تجربه کردن؛ نه وعدهٔ ثروتمند شدن.", false);
         footer.setTextSize(12); footer.setTextColor(color(R.color.muted)); footer.setPadding(0, dp(32), 0, 0);
         updateButtons();
@@ -754,7 +756,7 @@ public final class MainActivity extends Activity {
     }
     private void showCosts() {
         cancelRequest(); stopReading(); inquiry=false; uid=null; cursor=null; market=null;
-        speed="economy"; includeTag=false; budgetMode=false;
+        speed="economy"; includeTag=false; inPerson=false; budgetMode=false;
         screen("قیمت و هزینه‌ها"); costsPage=true;
         button("بازگشت",this::showContactGroup);
         text(content,"نرخ فقط با دکمهٔ زیر از سایت دریافت می‌شود. مبلغ و بودجه ارسال نمی‌شوند. تغییر سرعت و برچسب، درخواست تازه‌ای نمی‌فرستد. این برآورد سفارش یا تعهد پرداخت نیست.",false);
@@ -768,7 +770,8 @@ public final class MainActivity extends Activity {
             Button b=button(choices,labels[i],()->{speed=selected;renderMarket();},false);b.setTag("speed-"+selected);
         }
         button(choices,"بدون برچسب؛ تغییر انتخاب",()->{includeTag=!includeTag;renderMarket();},false).setTag("tag-choice");
-        text(choices,"سرعت‌ها فقط اولویت پیشنهادی‌اند، نه تضمین زمان تأیید. مواد پاکت یازده سنت (مهر سه، کاغذ یک، چاپ یک و پاکت شش سنت)، پست هفتاد و پنج سنت و برچسب دوازده سنت با فرض هر تتر برابر یک دلار برآورد می‌شوند. کارمزد گرداننده پانزده درصدِ اصل و هزینه‌هاست. نرخ صرافی نیم درصد تعدیل دارد.",false);
+        button(choices,"ارسال پستی؛ تغییر به حضوری",()->{inPerson=!inPerson;renderMarket();},false).setTag("delivery-choice");
+        text(choices,"سرعت‌ها فقط اولویت پیشنهادی‌اند، نه تضمین زمان تأیید. مواد پاکت پنج سنت (مهر سه، کاغذ یک و چاپ یک) همیشه حساب می‌شود. در ارسال پستی، پاکت شش سنت و پست هفتاد و پنج سنت هم می‌آید؛ در تحویل حضوری فقط همان مواد می‌ماند. برچسب دوازده سنت با فرض هر تتر برابر یک دلار برآورد می‌شوند. کارمزد گرداننده پانزده درصدِ اصل و هزینه‌هاست. نرخ صرافی نیم درصد تعدیل دارد.",false);
         marketTable=section("market-table","جدول برآورد",false);
         LinearLayout custom=section("custom-quote","محاسبهٔ مبلغ دلخواه",true);
         text(custom,"عدد صحیح مثبت با ارقام انگلیسی، بدون فاصله، جداکننده، اعشار یا صفر ابتدایی؛ حداکثر سی‌ودو رقم. اصل مبلغ از پانصد و یک ساتوشی تا سقف بیست‌ویک میلیون بیت‌کوین است.",false);
@@ -847,16 +850,17 @@ public final class MainActivity extends Activity {
         marketTable.removeAllViews();clearCustom();
         boolean usable=market!=null&&market.usable(marketClock.getAsLong());
         for(String s:new String[]{"economy","medium","fast"}) {
-            View b=content.findViewWithTag("speed-"+s);b.setEnabled(usable&&market.option(s,false)!=null);
+            View b=content.findViewWithTag("speed-"+s);b.setEnabled(usable&&market.option(s,false,false)!=null);
             ((Button)b).setSelected(s.equals(speed));
             String label=s.equals("economy")?"اقتصادی":s.equals("medium")?"متوسط":"سریع";
             ((Button)b).setText(label+(s.equals(speed)?"؛ انتخاب‌شده":"؛ انتخاب"));
             b.setBackground(surface(s.equals(speed)?R.color.surface:R.color.paper,s.equals(speed)?R.color.accent:R.color.line));
         }
         ((Button)content.findViewWithTag("tag-choice")).setText(includeTag?"با برچسب؛ تغییر به بدون برچسب":"بدون برچسب؛ تغییر به با برچسب");
-        MarketResponse.Option option=usable?market.option(speed,includeTag):null;
+        ((Button)content.findViewWithTag("delivery-choice")).setText(inPerson?"حضوری؛ تغییر به ارسال پستی":"ارسال پستی؛ تغییر به حضوری");
+        MarketResponse.Option option=usable?market.option(speed,includeTag,inPerson):null;
         calculate.setEnabled(option!=null);
-        text(marketTable,"انتخاب سرعت: "+(speed.equals("economy")?"اقتصادی":speed.equals("medium")?"متوسط":"سریع")+(includeTag?"؛ با برچسب":"؛ بدون برچسب"),false);
+        text(marketTable,"انتخاب سرعت: "+(speed.equals("economy")?"اقتصادی":speed.equals("medium")?"متوسط":"سریع")+(includeTag?"؛ با برچسب":"؛ بدون برچسب")+(inPerson?"؛ حضوری":"؛ پستی"),false);
         if(option==null) {text(marketTable,"نرخ معتبر برای این انتخاب در دسترس نیست.",false);updateMarketAge();return;}
         text(marketTable,"زمان دریافت در سایت",false);text(marketTable,market.fetchedAt,true);
         text(marketTable,"منبع قیمت و کارمزد، به گفتهٔ سایت",false);text(marketTable,MarketResponse.PRICES,true);text(marketTable,MarketResponse.FEES,true);
@@ -878,7 +882,7 @@ public final class MainActivity extends Activity {
     private void calculateQuote() {
         clearCustom();updateMarketAge();
         if(market==null||!market.usable(marketClock.getAsLong())) return;
-        MarketResponse.Option option=market.option(speed,includeTag);if(option==null) return;
+        MarketResponse.Option option=market.option(speed,includeTag,inPerson);if(option==null) return;
         try {
             JsonObject row=option.calculator.calculate(amount.getText().toString(),budgetMode);
             text(customResult,"برآورد با همان نرخ جدول؛ ورودی ارسال نشد. نرخ نهایی تضمین نمی‌شود. زمان دریافت:",false);
@@ -886,8 +890,8 @@ public final class MainActivity extends Activity {
         } catch(IllegalArgumentException invalid) {text(customResult,"مقدار معتبر نیست یا بودجه برای حداقل بسته کافی نیست. محدودیت ارقام و اصل مبلغ را بررسی کنید.",false);}
     }
     private void renderQuote(LinearLayout parent,JsonObject row) {
-        String[] fields={"principal_sats","btc","network_sats","materials_sats","post_sats","tag_sats","operator_sats","operator_toman","total_sats","total_toman","total_rial","budget_toman","remainder_toman"};
-        String[] labels={"اصل؛ ساتوشی","معادل بیت‌کوین","شبکه؛ ساتوشی","مواد پاکت؛ ساتوشی","پست؛ ساتوشی","برچسب؛ ساتوشی","گرداننده؛ ساتوشی","درآمد گرداننده؛ تومان","جمع؛ ساتوشی","جمع پرداختی؛ تومان","معادل ریال","بودجه؛ تومان","باقی‌مانده؛ تومان — جزو موجودی پاکت نیست"};
+        String[] fields={"principal_sats","btc","network_sats","materials_sats","envelope_sats","post_sats","tag_sats","operator_sats","operator_toman","total_sats","total_toman","total_rial","budget_toman","remainder_toman"};
+        String[] labels={"اصل؛ ساتوشی","معادل بیت‌کوین","شبکه؛ ساتوشی","مواد پاکت؛ ساتوشی","پاکت؛ ساتوشی","پست؛ ساتوشی","برچسب؛ ساتوشی","گرداننده؛ ساتوشی","درآمد گرداننده؛ تومان","جمع؛ ساتوشی","جمع پرداختی؛ تومان","معادل ریال","بودجه؛ تومان","باقی‌مانده؛ تومان — جزو موجودی پاکت نیست"};
         for(int i=0;i<fields.length;i++) if(!row.get(fields[i]).isJsonNull()) {text(parent,labels[i],false);text(parent,row.get(fields[i]).getAsString(),true);}
     }
     private void openPublic(String page) {

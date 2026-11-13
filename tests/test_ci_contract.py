@@ -127,5 +127,5 @@ class CiContract(unittest.TestCase):
   self.assertIn("resValue 'string', 'app_name', 'btc4fun (Debug)'",text)
   self.assertIn('btc4fun-${variant.buildType.name}.apk',text)
   self.assertIn('ANDROID_RELEASE_STORE_PASSWORD',text)
-  self.assertIn("versionCode 16; versionName '1.1.10'",text)
+  self.assertIn("versionCode 17; versionName '1.1.11'",text)
 if __name__=='__main__':unittest.main()

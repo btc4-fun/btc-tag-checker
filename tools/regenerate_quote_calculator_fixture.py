@@ -28,7 +28,7 @@ FIXTURE = ROOT / "core/src/test/resources/quote_calculator.json"
 
 # Row fields the app compares; the site's row also carries rates/assumptions/costs.
 ROW_KEYS = (
-    "principal_sats", "btc", "network_sats", "materials_sats", "post_sats", "tag_sats",
+    "principal_sats", "btc", "network_sats", "materials_sats", "envelope_sats", "post_sats", "tag_sats",
     "operator_sats", "operator_toman", "total_sats", "total_toman", "total_rial",
     "budget_toman", "remainder_toman",
 )
@@ -56,17 +56,18 @@ def refresh(pricing, fixture: dict) -> dict:
     for case in fixture["cases"]:
         inputs = case["inputs"]
         include_tag = bool(inputs.get("include_tag", False))
+        in_person = bool(inputs.get("in_person", False))
         if "expected_error" in case:
             cases.append(case)
             continue
         if case["mode"] == "principal":
             row = pricing.quote_for_principal(
                 inputs["btc_toman"], inputs["usdt_toman"], inputs["fee_rate"],
-                inputs["principal_sats"], include_tag=include_tag)
+                inputs["principal_sats"], include_tag=include_tag, in_person=in_person)
         else:
             row = pricing.quote_for_budget(
                 inputs["btc_toman"], inputs["usdt_toman"], inputs["fee_rate"],
-                inputs["budget_toman"], include_tag=include_tag)
+                inputs["budget_toman"], include_tag=include_tag, in_person=in_person)
         expected = dict(case["expected"])
         for key in ROW_KEYS:
             expected[key] = as_text(row[key])

@@ -45,7 +45,7 @@ public class QuoteCalculatorTest {
    }
    JsonObject expected=c.getAsJsonObject("expected");
    JsonObject actual=calculator.calculate(value,budget);
-   for(String key:new String[]{"principal_sats","btc","network_sats","materials_sats","post_sats","tag_sats","operator_sats","operator_toman","total_sats","total_toman","total_rial","remainder_toman"})
+   for(String key:new String[]{"principal_sats","btc","network_sats","materials_sats","envelope_sats","post_sats","tag_sats","operator_sats","operator_toman","total_sats","total_toman","total_rial","remainder_toman"})
     assertEquals(c.get("id")+" "+key,expected.get(key).getAsString(),actual.get(key).getAsString());
    if(budget) {
     BigInteger principal=actual.get("principal_sats").getAsBigInteger();

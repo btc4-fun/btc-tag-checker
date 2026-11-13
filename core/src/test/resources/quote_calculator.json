@@ -25,7 +25,7 @@
     "principal_sats": "3000",
     "btc": "0.00003000",
     "network_sats": "156",
-    "materials_sats": "110",
+    "materials_sats": "50",
     "post_sats": "750",
     "operator_sats": "603",
     "total_sats": "4619",
@@ -41,25 +41,28 @@
     "assumptions": {
      "exchange_fee_percent": "0.5",
      "operator_fee_percent": "15",
-     "materials_usd": "0.11",
+     "materials_usd": "0.05",
+     "envelope_usd": "0.06",
      "post_usd": "0.75",
      "tag_usd": "0.12",
      "include_tag": "False",
+     "in_person": "False",
      "transaction_vbytes": "141",
      "network_fee_rate": "1.1",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01",
-     "envelope_usd": "0.06"
+     "print_usd": "0.01"
     },
     "costs": {
      "network_sats": "156",
-     "materials_sats": "110",
+     "materials_sats": "50",
+     "envelope_sats": "60",
      "post_sats": "750",
      "tag_sats": "0"
     },
     "tag_sats": "0",
-    "operator_toman": "60602"
+    "operator_toman": "60602",
+    "envelope_sats": "60"
    },
    "raw_asset_toman": "300000"
   },
@@ -76,12 +79,12 @@
     "principal_sats": "3000",
     "btc": "0.00003000",
     "network_sats": "175",
-    "materials_sats": "89",
+    "materials_sats": "41",
     "post_sats": "601",
     "operator_sats": "580",
-    "total_sats": "4445",
-    "total_toman": "551510",
-    "total_rial": "5515100",
+    "total_sats": "4446",
+    "total_toman": "551634",
+    "total_rial": "5516340",
     "budget_toman": null,
     "remainder_toman": "0",
     "rates": {
@@ -92,25 +95,28 @@
     "assumptions": {
      "exchange_fee_percent": "0.5",
      "operator_fee_percent": "15",
-     "materials_usd": "0.11",
+     "materials_usd": "0.05",
+     "envelope_usd": "0.06",
      "post_usd": "0.75",
      "tag_usd": "0.12",
      "include_tag": "False",
+     "in_person": "False",
      "transaction_vbytes": "141",
      "network_fee_rate": "1.23456789",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01",
-     "envelope_usd": "0.06"
+     "print_usd": "0.01"
     },
     "costs": {
      "network_sats": "175",
-     "materials_sats": "89",
+     "materials_sats": "41",
+     "envelope_sats": "49",
      "post_sats": "601",
      "tag_sats": "0"
     },
     "tag_sats": "0",
-    "operator_toman": "71963"
+    "operator_toman": "71963",
+    "envelope_sats": "49"
    },
    "raw_asset_toman": "370370.3670337037034"
   },
@@ -130,9 +136,9 @@
     "materials_sats": "1",
     "post_sats": "1",
     "operator_sats": "211951",
-    "total_sats": "1624953",
-    "total_toman": "16330777650000",
-    "total_rial": "163307776500000",
+    "total_sats": "1624954",
+    "total_toman": "16330787700000",
+    "total_rial": "163307877000000",
     "budget_toman": null,
     "remainder_toman": "0",
     "rates": {
@@ -143,25 +149,28 @@
     "assumptions": {
      "exchange_fee_percent": "0.5",
      "operator_fee_percent": "15",
-     "materials_usd": "0.11",
+     "materials_usd": "0.05",
+     "envelope_usd": "0.06",
      "post_usd": "0.75",
      "tag_usd": "0.12",
      "include_tag": "False",
+     "in_person": "False",
      "transaction_vbytes": "141",
      "network_fee_rate": "9999.999999999999999999",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01",
-     "envelope_usd": "0.06"
+     "print_usd": "0.01"
     },
     "costs": {
      "network_sats": "1410000",
      "materials_sats": "1",
+     "envelope_sats": "1",
      "post_sats": "1",
      "tag_sats": "0"
     },
     "tag_sats": "0",
-    "operator_toman": "2130107550000"
+    "operator_toman": "2130107550000",
+    "envelope_sats": "1"
    },
    "raw_asset_toman": "29999999999.99999999999999999999997"
   },
@@ -178,7 +187,7 @@
     "principal_sats": "2100000000000000",
     "btc": "21000000.00000000",
     "network_sats": "156",
-    "materials_sats": "110",
+    "materials_sats": "50",
     "post_sats": "750",
     "operator_sats": "315000000000153",
     "total_sats": "2415000000001169",
@@ -194,25 +203,28 @@
     "assumptions": {
      "exchange_fee_percent": "0.5",
      "operator_fee_percent": "15",
-     "materials_usd": "0.11",
+     "materials_usd": "0.05",
+     "envelope_usd": "0.06",
      "post_usd": "0.75",
      "tag_usd": "0.12",
      "include_tag": "False",
+     "in_person": "False",
      "transaction_vbytes": "141",
      "network_fee_rate": "1.1",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01",
-     "envelope_usd": "0.06"
+     "print_usd": "0.01"
     },
     "costs": {
      "network_sats": "156",
-     "materials_sats": "110",
+     "materials_sats": "50",
+     "envelope_sats": "60",
      "post_sats": "750",
      "tag_sats": "0"
     },
     "tag_sats": "0",
-    "operator_toman": "31657500000015377"
+    "operator_toman": "31657500000015377",
+    "envelope_sats": "60"
    },
    "raw_asset_toman": "210000000000000000"
   },
@@ -229,7 +241,7 @@
     "principal_sats": "3000",
     "btc": "0.00003000",
     "network_sats": "1",
-    "materials_sats": "11000000000000000000000000000000000000000",
+    "materials_sats": "5000000000000000000000000000000000000000",
     "post_sats": "75000000000000000000000000000000000000000",
     "operator_sats": "12900000000000000000000000000000000000451",
     "total_sats": "98900000000000000000000000000000000003452",
@@ -245,25 +257,28 @@
     "assumptions": {
      "exchange_fee_percent": "0.5",
      "operator_fee_percent": "15",
-     "materials_usd": "0.11",
+     "materials_usd": "0.05",
+     "envelope_usd": "0.06",
      "post_usd": "0.75",
      "tag_usd": "0.12",
      "include_tag": "False",
+     "in_person": "False",
      "transaction_vbytes": "141",
      "network_fee_rate": "0.000000000000000001",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01",
-     "envelope_usd": "0.06"
+     "print_usd": "0.01"
     },
     "costs": {
      "network_sats": "1",
-     "materials_sats": "11000000000000000000000000000000000000000",
+     "materials_sats": "5000000000000000000000000000000000000000",
+     "envelope_sats": "6000000000000000000000000000000000000000",
      "post_sats": "75000000000000000000000000000000000000000",
      "tag_sats": "0"
     },
     "tag_sats": "0",
-    "operator_toman": "129645000000001"
+    "operator_toman": "129645000000001",
+    "envelope_sats": "6000000000000000000000000000000000000000"
    },
    "raw_asset_toman": "0.00000000000000000000003"
   },
@@ -310,7 +325,7 @@
     "principal_sats": "501",
     "btc": "0.00000501",
     "network_sats": "156",
-    "materials_sats": "110",
+    "materials_sats": "50",
     "post_sats": "750",
     "operator_sats": "228",
     "total_sats": "1745",
@@ -326,25 +341,28 @@
     "assumptions": {
      "exchange_fee_percent": "0.5",
      "operator_fee_percent": "15",
-     "materials_usd": "0.11",
+     "materials_usd": "0.05",
+     "envelope_usd": "0.06",
      "post_usd": "0.75",
      "tag_usd": "0.12",
      "include_tag": "False",
+     "in_person": "False",
      "transaction_vbytes": "141",
      "network_fee_rate": "1.1",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01",
-     "envelope_usd": "0.06"
+     "print_usd": "0.01"
     },
     "costs": {
      "network_sats": "156",
-     "materials_sats": "110",
+     "materials_sats": "50",
+     "envelope_sats": "60",
      "post_sats": "750",
      "tag_sats": "0"
     },
     "tag_sats": "0",
-    "operator_toman": "22914"
+    "operator_toman": "22914",
+    "envelope_sats": "60"
    },
    "raw_asset_toman": "50100",
    "next_principal_total_toman": "175473"
@@ -362,7 +380,7 @@
     "principal_sats": "714",
     "btc": "0.00000714",
     "network_sats": "156",
-    "materials_sats": "110",
+    "materials_sats": "50",
     "post_sats": "750",
     "operator_sats": "260",
     "total_sats": "1990",
@@ -378,25 +396,28 @@
     "assumptions": {
      "exchange_fee_percent": "0.5",
      "operator_fee_percent": "15",
-     "materials_usd": "0.11",
+     "materials_usd": "0.05",
+     "envelope_usd": "0.06",
      "post_usd": "0.75",
      "tag_usd": "0.12",
      "include_tag": "False",
+     "in_person": "False",
      "transaction_vbytes": "141",
      "network_fee_rate": "1.1",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01",
-     "envelope_usd": "0.06"
+     "print_usd": "0.01"
     },
     "costs": {
      "network_sats": "156",
-     "materials_sats": "110",
+     "materials_sats": "50",
+     "envelope_sats": "60",
      "post_sats": "750",
      "tag_sats": "0"
     },
     "tag_sats": "0",
-    "operator_toman": "26130"
+    "operator_toman": "26130",
+    "envelope_sats": "60"
    },
    "raw_asset_toman": "71400",
    "next_principal_total_toman": "200096"
@@ -414,7 +435,7 @@
     "principal_sats": "3000",
     "btc": "0.00003000",
     "network_sats": "156",
-    "materials_sats": "110",
+    "materials_sats": "50",
     "post_sats": "750",
     "operator_sats": "603",
     "total_sats": "4619",
@@ -430,25 +451,28 @@
     "assumptions": {
      "exchange_fee_percent": "0.5",
      "operator_fee_percent": "15",
-     "materials_usd": "0.11",
+     "materials_usd": "0.05",
+     "envelope_usd": "0.06",
      "post_usd": "0.75",
      "tag_usd": "0.12",
      "include_tag": "False",
+     "in_person": "False",
      "transaction_vbytes": "141",
      "network_fee_rate": "1.1",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01",
-     "envelope_usd": "0.06"
+     "print_usd": "0.01"
     },
     "costs": {
      "network_sats": "156",
-     "materials_sats": "110",
+     "materials_sats": "50",
+     "envelope_sats": "60",
      "post_sats": "750",
      "tag_sats": "0"
     },
     "tag_sats": "0",
-    "operator_toman": "60602"
+    "operator_toman": "60602",
+    "envelope_sats": "60"
    },
    "raw_asset_toman": "300000",
    "next_principal_total_toman": "464310"
@@ -466,7 +490,7 @@
     "principal_sats": "2999",
     "btc": "0.00002999",
     "network_sats": "156",
-    "materials_sats": "110",
+    "materials_sats": "50",
     "post_sats": "750",
     "operator_sats": "603",
     "total_sats": "4618",
@@ -482,25 +506,28 @@
     "assumptions": {
      "exchange_fee_percent": "0.5",
      "operator_fee_percent": "15",
-     "materials_usd": "0.11",
+     "materials_usd": "0.05",
+     "envelope_usd": "0.06",
      "post_usd": "0.75",
      "tag_usd": "0.12",
      "include_tag": "False",
+     "in_person": "False",
      "transaction_vbytes": "141",
      "network_fee_rate": "1.1",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01",
-     "envelope_usd": "0.06"
+     "print_usd": "0.01"
     },
     "costs": {
      "network_sats": "156",
-     "materials_sats": "110",
+     "materials_sats": "50",
+     "envelope_sats": "60",
      "post_sats": "750",
      "tag_sats": "0"
     },
     "tag_sats": "0",
-    "operator_toman": "60602"
+    "operator_toman": "60602",
+    "envelope_sats": "60"
    },
    "raw_asset_toman": "299900",
    "next_principal_total_toman": "464210"
@@ -518,7 +545,7 @@
     "principal_sats": "431603",
     "btc": "0.00431603",
     "network_sats": "156",
-    "materials_sats": "110",
+    "materials_sats": "50",
     "post_sats": "750",
     "operator_sats": "64893",
     "total_sats": "497512",
@@ -534,25 +561,28 @@
     "assumptions": {
      "exchange_fee_percent": "0.5",
      "operator_fee_percent": "15",
-     "materials_usd": "0.11",
+     "materials_usd": "0.05",
+     "envelope_usd": "0.06",
      "post_usd": "0.75",
      "tag_usd": "0.12",
      "include_tag": "False",
+     "in_person": "False",
      "transaction_vbytes": "141",
      "network_fee_rate": "1.1",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01",
-     "envelope_usd": "0.06"
+     "print_usd": "0.01"
     },
     "costs": {
      "network_sats": "156",
-     "materials_sats": "110",
+     "materials_sats": "50",
+     "envelope_sats": "60",
      "post_sats": "750",
      "tag_sats": "0"
     },
     "tag_sats": "0",
-    "operator_toman": "6521747"
+    "operator_toman": "6521747",
+    "envelope_sats": "60"
    },
    "raw_asset_toman": "43160300",
    "next_principal_total_toman": "50000057"
@@ -567,10 +597,10 @@
     "budget_toman": "50000001"
    },
    "expected": {
-    "principal_sats": "349556",
-    "btc": "0.00349556",
+    "principal_sats": "349555",
+    "btc": "0.00349555",
     "network_sats": "175",
-    "materials_sats": "89",
+    "materials_sats": "41",
     "post_sats": "601",
     "operator_sats": "52564",
     "total_sats": "402985",
@@ -586,25 +616,28 @@
     "assumptions": {
      "exchange_fee_percent": "0.5",
      "operator_fee_percent": "15",
-     "materials_usd": "0.11",
+     "materials_usd": "0.05",
+     "envelope_usd": "0.06",
      "post_usd": "0.75",
      "tag_usd": "0.12",
      "include_tag": "False",
+     "in_person": "False",
      "transaction_vbytes": "141",
      "network_fee_rate": "1.23456789",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01",
-     "envelope_usd": "0.06"
+     "print_usd": "0.01"
     },
     "costs": {
      "network_sats": "175",
-     "materials_sats": "89",
+     "materials_sats": "41",
+     "envelope_sats": "49",
      "post_sats": "601",
      "tag_sats": "0"
     },
     "tag_sats": "0",
-    "operator_toman": "6521830"
+    "operator_toman": "6521830",
+    "envelope_sats": "49"
    },
    "raw_asset_toman": "43155061.3396111105818968",
    "next_principal_total_toman": "50000115"
@@ -622,7 +655,7 @@
     "principal_sats": "2100000000000000",
     "btc": "21000000.00000000",
     "network_sats": "1",
-    "materials_sats": "11000000",
+    "materials_sats": "5000000",
     "post_sats": "75000000",
     "operator_sats": "315000012900001",
     "total_sats": "2415000098900002",
@@ -638,25 +671,28 @@
     "assumptions": {
      "exchange_fee_percent": "0.5",
      "operator_fee_percent": "15",
-     "materials_usd": "0.11",
+     "materials_usd": "0.05",
+     "envelope_usd": "0.06",
      "post_usd": "0.75",
      "tag_usd": "0.12",
      "include_tag": "False",
+     "in_person": "False",
      "transaction_vbytes": "141",
      "network_fee_rate": "0.000000000000000001",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01",
-     "envelope_usd": "0.06"
+     "print_usd": "0.01"
     },
     "costs": {
      "network_sats": "1",
-     "materials_sats": "11000000",
+     "materials_sats": "5000000",
+     "envelope_sats": "6000000",
      "post_sats": "75000000",
      "tag_sats": "0"
     },
     "tag_sats": "0",
-    "operator_toman": "1"
+    "operator_toman": "1",
+    "envelope_sats": "6000000"
    },
    "raw_asset_toman": "0.000000000021"
   },
@@ -673,7 +709,7 @@
     "principal_sats": "2100000000000000",
     "btc": "21000000.00000000",
     "network_sats": "156",
-    "materials_sats": "110",
+    "materials_sats": "50",
     "post_sats": "750",
     "operator_sats": "315000000000153",
     "total_sats": "2415000000001169",
@@ -689,25 +725,28 @@
     "assumptions": {
      "exchange_fee_percent": "0.5",
      "operator_fee_percent": "15",
-     "materials_usd": "0.11",
+     "materials_usd": "0.05",
+     "envelope_usd": "0.06",
      "post_usd": "0.75",
      "tag_usd": "0.12",
      "include_tag": "False",
+     "in_person": "False",
      "transaction_vbytes": "141",
      "network_fee_rate": "1.1",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01",
-     "envelope_usd": "0.06"
+     "print_usd": "0.01"
     },
     "costs": {
      "network_sats": "156",
-     "materials_sats": "110",
+     "materials_sats": "50",
+     "envelope_sats": "60",
      "post_sats": "750",
      "tag_sats": "0"
     },
     "tag_sats": "0",
-    "operator_toman": "31657500000015377"
+    "operator_toman": "31657500000015377",
+    "envelope_sats": "60"
    },
    "raw_asset_toman": "210000000000000000"
   },
@@ -724,7 +763,7 @@
     "principal_sats": "2099999999999999",
     "btc": "20999999.99999999",
     "network_sats": "156",
-    "materials_sats": "110",
+    "materials_sats": "50",
     "post_sats": "750",
     "operator_sats": "315000000000153",
     "total_sats": "2415000000001168",
@@ -740,25 +779,28 @@
     "assumptions": {
      "exchange_fee_percent": "0.5",
      "operator_fee_percent": "15",
-     "materials_usd": "0.11",
+     "materials_usd": "0.05",
+     "envelope_usd": "0.06",
      "post_usd": "0.75",
      "tag_usd": "0.12",
      "include_tag": "False",
+     "in_person": "False",
      "transaction_vbytes": "141",
      "network_fee_rate": "1.1",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01",
-     "envelope_usd": "0.06"
+     "print_usd": "0.01"
     },
     "costs": {
      "network_sats": "156",
-     "materials_sats": "110",
+     "materials_sats": "50",
+     "envelope_sats": "60",
      "post_sats": "750",
      "tag_sats": "0"
     },
     "tag_sats": "0",
-    "operator_toman": "31657500000015377"
+    "operator_toman": "31657500000015377",
+    "envelope_sats": "60"
    },
    "raw_asset_toman": "209999999999999900",
    "next_principal_total_toman": "242707500000117485"
@@ -779,11 +821,11 @@
     "materials_sats": "1",
     "post_sats": "1",
     "operator_sats": "315000000211501",
-    "total_sats": "2415000001621503",
-    "total_toman": "24270750016296105150000",
-    "total_rial": "242707500162961051500000",
+    "total_sats": "2415000001621504",
+    "total_toman": "24270750016296115200000",
+    "total_rial": "242707500162961152000000",
     "budget_toman": "9999999999999999999999999999999999999999999999999999999999999999",
-    "remainder_toman": "9999999999999999999999999999999999999999975729249983703894849999",
+    "remainder_toman": "9999999999999999999999999999999999999999975729249983703884799999",
     "rates": {
      "btc_toman": "1004999999999999.999999999999999998995",
      "usdt_toman": "0.000000000000000001005",
@@ -792,25 +834,28 @@
     "assumptions": {
      "exchange_fee_percent": "0.5",
      "operator_fee_percent": "15",
-     "materials_usd": "0.11",
+     "materials_usd": "0.05",
+     "envelope_usd": "0.06",
      "post_usd": "0.75",
      "tag_usd": "0.12",
      "include_tag": "False",
+     "in_person": "False",
      "transaction_vbytes": "141",
      "network_fee_rate": "9999.999999999999999999",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01",
-     "envelope_usd": "0.06"
+     "print_usd": "0.01"
     },
     "costs": {
      "network_sats": "1410000",
      "materials_sats": "1",
+     "envelope_sats": "1",
      "post_sats": "1",
      "tag_sats": "0"
     },
     "tag_sats": "0",
-    "operator_toman": "3165750002125585050000"
+    "operator_toman": "3165750002125585050000",
+    "envelope_sats": "1"
    },
    "raw_asset_toman": "20999999999999999999999.999999999979"
   }
