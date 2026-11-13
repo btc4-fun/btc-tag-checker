@@ -178,9 +178,12 @@ public final class VisualInstrumentation extends Instrumentation {
                     check(groupLearn.getMinimumHeight()>=Math.round(48*density),"learn group button meets 48dp touch target");
                     check(groupContact.getMinimumHeight()>=Math.round(48*density),"contact group button meets 48dp touch target");
                     boolean directLink=false;
-                    for(String label:new String[]{"راهنمای پاکت","شرایط و مسئولیت‌ها","اطلاعات پرداخت","امنیت و نگهداری","قیمت و هزینه‌ها","ارتباط با ما"})
+                    for(String label:new String[]{"راهنمای پاکت","شرایط و مسئولیت‌ها","اطلاعات پرداخت","امنیت و نگهداری","ارتباط با ما"})
                         for(View v:views(content)) if(v instanceof Button && ((Button)v).getText().toString().equals(label)) directLink=true;
                     check(!directLink,"no direct terms/payment/security page buttons on home");
+                    // The owner asked for the costs screen to be reachable straight from home.
+                    Button homeCosts=(Button)tagged("home-costs");
+                    check(homeCosts!=null && homeCosts.getText().toString().equals("قیمت و هزینه‌ها"),"home exposes the costs screen");
                     Button requestButton=(Button)tagged("request-button");
                     check(requestButton!=null,"request button semantic locator missing");
                     check(requestButton.getText().toString().equals("دیدن موجودی و تراکنش‌ها"),"request button label is unnumbered contract");
