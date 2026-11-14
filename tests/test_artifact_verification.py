@@ -23,10 +23,10 @@ class ArtifactVerification(unittest.TestCase):
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         metadata = {'applicationId': 'com.saebm.btcnfccustomer.debug', 'elements': [
-            {'versionCode': 17, 'versionName': '1.1.11-test-only', 'outputFile': 'btc4fun-debug.apk'}]}
-        badging = "package: name='com.saebm.btcnfccustomer.debug' versionCode='17' versionName='1.1.11-test-only'\napplication-label:'btc4fun (Debug)'\n"
+            {'versionCode': 18, 'versionName': '1.1.12-test-only', 'outputFile': 'btc4fun-debug.apk'}]}
+        badging = "package: name='com.saebm.btcnfccustomer.debug' versionCode='18' versionName='1.1.12-test-only'\napplication-label:'btc4fun (Debug)'\n"
         module.validate_identity(metadata, badging, 'debug')
-        for old, new in [('com.saebm.btcnfccustomer.debug', 'wrong.id'), ("versionCode='17'", "versionCode='7'"), ('btc4fun (Debug)', 'Old Name')]:
+        for old, new in [('com.saebm.btcnfccustomer.debug', 'wrong.id'), ("versionCode='18'", "versionCode='8'"), ('btc4fun (Debug)', 'Old Name')]:
             with self.subTest(old=old), self.assertRaises(ValueError):
                 module.validate_identity(metadata, badging.replace(old, new), 'debug')
         cert = 'a'*64

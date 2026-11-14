@@ -7,9 +7,10 @@
   "principal": "int or ASCII digits; 501 <= principal_sats <=2100000000000000.",
   "budget": "Whole toman int or ASCII digits; 0 <= budget_toman <=10^64-1. No table budget cap. Below minimum cost: Python ValueError; browser explicit insufficient status with no principal.",
   "raw_asset_toman": "Exact principal_sats * raw btc_toman /100000000; no exchange markup, network, materials, post, operator or ceiling. Decimal text.",
-  "formula": "adjusted rates=raw*201/200; satprice=adjustedBTC/100000000; network=ceil(rate*141); materials=ceil((11/100)*adjustedUSDT/satprice); post=ceil((75/100)*adjustedUSDT/satprice); tag=ceil((12/100)*adjustedUSDT/satprice) when include_tag; operator=ceil((3/20)*(principal+network+materials+post+tag)); totalToman=ceil((principal+network+materials+post+tag+operator)*satprice); totalRial=totalToman*10; remainder=budget-totalToman. Budget result is maximal principal bounded by supply.",
-  "materials": "Per-envelope materials total $0.11 = $0.03 wax seal + $0.01 paper + $0.01 print + $0.06 envelope, exposed as materials_sats/materials_usd with the breakdown in assumptions (seal_usd, paper_usd, print_usd, envelope_usd).",
-  "post": "Separate per-envelope postage of $0.75, exposed as post_sats/post_usd; included in the 15% operator subtotal like every other cost."
+  "formula": "adjustedBTC=rawBTC*101/100 (one 1% exchange markup, applied to the rate only); adjustedUSDT=rawUSDT (no markup); satprice=adjustedBTC/100000000; network=ceil(rate*141); convert=ceil((2/100)*adjustedUSDT/satprice); transfer=423; materials=ceil((5/100)*adjustedUSDT/satprice); envelope=ceil((6/100)*adjustedUSDT/satprice) unless in_person; post=ceil((75/100)*adjustedUSDT/satprice) unless in_person; tag=ceil((12/100)*adjustedUSDT/satprice) when include_tag; operator=ceil((3/20)*(principal+network+convert+transfer+materials+envelope+post+tag)); totalToman=ceil((principal+network+convert+transfer+materials+envelope+post+tag+operator)*satprice); totalRial=totalToman*10; remainder=budget-totalToman. The principal is never charged a second percentage fee. Budget result is maximal principal bounded by supply.",
+  "materials": "Per-envelope materials total $0.05 = $0.03 wax seal + $0.01 paper + $0.01 print, exposed as materials_sats/materials_usd with the breakdown in assumptions (seal_usd, paper_usd, print_usd). The $0.06 envelope is a separate postal cost, not part of materials.",
+  "post": "Separate per-envelope postage of $0.75, exposed as post_sats/post_usd; included in the 15% operator subtotal like every other cost.",
+  "acquisition": "convert_sats is the flat $0.02 exchange conversion fee converted at the same USDT assumption; transfer_sats is 423 satoshis, fixed in bitcoin and never multiplied by a rate. Both appear in costs and in every row and are inside the 15% operator subtotal. Neither depends on the selected fee speed; only network_sats does."
  },
  "cases": [
   {
@@ -25,21 +26,26 @@
     "principal_sats": "3000",
     "btc": "0.00003000",
     "network_sats": "156",
+    "convert_sats": "20",
+    "transfer_sats": "423",
     "materials_sats": "50",
-    "post_sats": "750",
-    "operator_sats": "603",
-    "total_sats": "4619",
-    "total_toman": "464210",
-    "total_rial": "4642100",
+    "envelope_sats": "60",
+    "post_sats": "743",
+    "tag_sats": "0",
+    "operator_sats": "668",
+    "operator_toman": "67468",
+    "total_sats": "5120",
+    "total_toman": "517120",
+    "total_rial": "5171200",
     "budget_toman": null,
     "remainder_toman": "0",
     "rates": {
-     "btc_toman": "10050000000",
-     "usdt_toman": "100500",
-     "satoshi_toman": "100.5"
+     "btc_toman": "10100000000",
+     "usdt_toman": "100000",
+     "satoshi_toman": "101"
     },
     "assumptions": {
-     "exchange_fee_percent": "0.5",
+     "exchange_fee_percent": "1",
      "operator_fee_percent": "15",
      "materials_usd": "0.05",
      "envelope_usd": "0.06",
@@ -51,18 +57,19 @@
      "network_fee_rate": "1.1",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01"
+     "print_usd": "0.01",
+     "convert_usd": "0.02",
+     "transfer_sats": "423"
     },
     "costs": {
      "network_sats": "156",
+     "convert_sats": "20",
+     "transfer_sats": "423",
      "materials_sats": "50",
      "envelope_sats": "60",
-     "post_sats": "750",
+     "post_sats": "743",
      "tag_sats": "0"
-    },
-    "tag_sats": "0",
-    "operator_toman": "60602",
-    "envelope_sats": "60"
+    }
    },
    "raw_asset_toman": "300000"
   },
@@ -79,21 +86,26 @@
     "principal_sats": "3000",
     "btc": "0.00003000",
     "network_sats": "175",
-    "materials_sats": "41",
-    "post_sats": "601",
-    "operator_sats": "580",
-    "total_sats": "4446",
-    "total_toman": "551634",
-    "total_rial": "5516340",
+    "convert_sats": "16",
+    "transfer_sats": "423",
+    "materials_sats": "40",
+    "envelope_sats": "48",
+    "post_sats": "595",
+    "tag_sats": "0",
+    "operator_sats": "645",
+    "operator_toman": "80426",
+    "total_sats": "4942",
+    "total_toman": "616225",
+    "total_rial": "6162250",
     "budget_toman": null,
     "remainder_toman": "0",
     "rates": {
-     "btc_toman": "12407407295.6290740639",
-     "usdt_toman": "99259.2592605",
-     "satoshi_toman": "124.074072956290740639"
+     "btc_toman": "12469135690.1346913478",
+     "usdt_toman": "98765.4321",
+     "satoshi_toman": "124.691356901346913478"
     },
     "assumptions": {
-     "exchange_fee_percent": "0.5",
+     "exchange_fee_percent": "1",
      "operator_fee_percent": "15",
      "materials_usd": "0.05",
      "envelope_usd": "0.06",
@@ -105,18 +117,19 @@
      "network_fee_rate": "1.23456789",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01"
+     "print_usd": "0.01",
+     "convert_usd": "0.02",
+     "transfer_sats": "423"
     },
     "costs": {
      "network_sats": "175",
-     "materials_sats": "41",
-     "envelope_sats": "49",
-     "post_sats": "601",
+     "convert_sats": "16",
+     "transfer_sats": "423",
+     "materials_sats": "40",
+     "envelope_sats": "48",
+     "post_sats": "595",
      "tag_sats": "0"
-    },
-    "tag_sats": "0",
-    "operator_toman": "71963",
-    "envelope_sats": "49"
+    }
    },
    "raw_asset_toman": "370370.3670337037034"
   },
@@ -133,21 +146,26 @@
     "principal_sats": "3000",
     "btc": "0.00003000",
     "network_sats": "1410000",
+    "convert_sats": "1",
+    "transfer_sats": "423",
     "materials_sats": "1",
+    "envelope_sats": "1",
     "post_sats": "1",
-    "operator_sats": "211951",
-    "total_sats": "1624954",
-    "total_toman": "16330787700000",
-    "total_rial": "163307877000000",
+    "tag_sats": "0",
+    "operator_sats": "212015",
+    "operator_toman": "2141351500000",
+    "total_sats": "1625442",
+    "total_toman": "16416964200000",
+    "total_rial": "164169642000000",
     "budget_toman": null,
     "remainder_toman": "0",
     "rates": {
-     "btc_toman": "1004999999999999.999999999999999998995",
-     "usdt_toman": "0.000000000000000001005",
-     "satoshi_toman": "10049999.99999999999999999999999998995"
+     "btc_toman": "1009999999999999.99999999999999999899",
+     "usdt_toman": "0.000000000000000001",
+     "satoshi_toman": "10099999.9999999999999999999999999899"
     },
     "assumptions": {
-     "exchange_fee_percent": "0.5",
+     "exchange_fee_percent": "1",
      "operator_fee_percent": "15",
      "materials_usd": "0.05",
      "envelope_usd": "0.06",
@@ -159,18 +177,19 @@
      "network_fee_rate": "9999.999999999999999999",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01"
+     "print_usd": "0.01",
+     "convert_usd": "0.02",
+     "transfer_sats": "423"
     },
     "costs": {
      "network_sats": "1410000",
+     "convert_sats": "1",
+     "transfer_sats": "423",
      "materials_sats": "1",
      "envelope_sats": "1",
      "post_sats": "1",
      "tag_sats": "0"
-    },
-    "tag_sats": "0",
-    "operator_toman": "2130107550000",
-    "envelope_sats": "1"
+    }
    },
    "raw_asset_toman": "29999999999.99999999999999999999997"
   },
@@ -187,21 +206,26 @@
     "principal_sats": "2100000000000000",
     "btc": "21000000.00000000",
     "network_sats": "156",
+    "convert_sats": "20",
+    "transfer_sats": "423",
     "materials_sats": "50",
-    "post_sats": "750",
-    "operator_sats": "315000000000153",
-    "total_sats": "2415000000001169",
-    "total_toman": "242707500000117485",
-    "total_rial": "2427075000001174850",
+    "envelope_sats": "60",
+    "post_sats": "743",
+    "tag_sats": "0",
+    "operator_sats": "315000000000218",
+    "operator_toman": "31815000000022018",
+    "total_sats": "2415000000001670",
+    "total_toman": "243915000000168670",
+    "total_rial": "2439150000001686700",
     "budget_toman": null,
     "remainder_toman": "0",
     "rates": {
-     "btc_toman": "10050000000",
-     "usdt_toman": "100500",
-     "satoshi_toman": "100.5"
+     "btc_toman": "10100000000",
+     "usdt_toman": "100000",
+     "satoshi_toman": "101"
     },
     "assumptions": {
-     "exchange_fee_percent": "0.5",
+     "exchange_fee_percent": "1",
      "operator_fee_percent": "15",
      "materials_usd": "0.05",
      "envelope_usd": "0.06",
@@ -213,18 +237,19 @@
      "network_fee_rate": "1.1",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01"
+     "print_usd": "0.01",
+     "convert_usd": "0.02",
+     "transfer_sats": "423"
     },
     "costs": {
      "network_sats": "156",
+     "convert_sats": "20",
+     "transfer_sats": "423",
      "materials_sats": "50",
      "envelope_sats": "60",
-     "post_sats": "750",
+     "post_sats": "743",
      "tag_sats": "0"
-    },
-    "tag_sats": "0",
-    "operator_toman": "31657500000015377",
-    "envelope_sats": "60"
+    }
    },
    "raw_asset_toman": "210000000000000000"
   },
@@ -241,21 +266,26 @@
     "principal_sats": "3000",
     "btc": "0.00003000",
     "network_sats": "1",
-    "materials_sats": "5000000000000000000000000000000000000000",
-    "post_sats": "75000000000000000000000000000000000000000",
-    "operator_sats": "12900000000000000000000000000000000000451",
-    "total_sats": "98900000000000000000000000000000000003452",
-    "total_toman": "993945000000001",
-    "total_rial": "9939450000000010",
+    "convert_sats": "1980198019801980198019801980198019801981",
+    "transfer_sats": "423",
+    "materials_sats": "4950495049504950495049504950495049504951",
+    "envelope_sats": "5940594059405940594059405940594059405941",
+    "post_sats": "74257425742574257425742574257425742574258",
+    "tag_sats": "0",
+    "operator_sats": "13069306930693069306930693069306930693584",
+    "operator_toman": "132000000000001",
+    "total_sats": "100198019801980198019801980198019801984139",
+    "total_toman": "1012000000000001",
+    "total_rial": "10120000000000010",
     "budget_toman": null,
     "remainder_toman": "0",
     "rates": {
-     "btc_toman": "0.000000000000000001005",
-     "usdt_toman": "1005000000000000",
-     "satoshi_toman": "0.00000000000000000000000001005"
+     "btc_toman": "0.00000000000000000101",
+     "usdt_toman": "1000000000000000",
+     "satoshi_toman": "0.0000000000000000000000000101"
     },
     "assumptions": {
-     "exchange_fee_percent": "0.5",
+     "exchange_fee_percent": "1",
      "operator_fee_percent": "15",
      "materials_usd": "0.05",
      "envelope_usd": "0.06",
@@ -267,18 +297,19 @@
      "network_fee_rate": "0.000000000000000001",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01"
+     "print_usd": "0.01",
+     "convert_usd": "0.02",
+     "transfer_sats": "423"
     },
     "costs": {
      "network_sats": "1",
-     "materials_sats": "5000000000000000000000000000000000000000",
-     "envelope_sats": "6000000000000000000000000000000000000000",
-     "post_sats": "75000000000000000000000000000000000000000",
+     "convert_sats": "1980198019801980198019801980198019801981",
+     "transfer_sats": "423",
+     "materials_sats": "4950495049504950495049504950495049504951",
+     "envelope_sats": "5940594059405940594059405940594059405941",
+     "post_sats": "74257425742574257425742574257425742574258",
      "tag_sats": "0"
-    },
-    "tag_sats": "0",
-    "operator_toman": "129645000000001",
-    "envelope_sats": "6000000000000000000000000000000000000000"
+    }
    },
    "raw_asset_toman": "0.00000000000000000000003"
   },
@@ -289,12 +320,12 @@
     "btc_toman": "10000000000",
     "usdt_toman": "100000",
     "fee_rate": "1.1",
-    "budget_toman": "175372"
+    "budget_toman": "226845"
    },
    "expected_error": {
     "status": "insufficient",
     "minimum_principal_sats": "501",
-    "minimum_total_toman": "175373"
+    "minimum_total_toman": "226846"
    }
   },
   {
@@ -309,7 +340,7 @@
    "expected_error": {
     "status": "insufficient",
     "minimum_principal_sats": "501",
-    "minimum_total_toman": "175373"
+    "minimum_total_toman": "226846"
    }
   },
   {
@@ -319,27 +350,32 @@
     "btc_toman": "10000000000",
     "usdt_toman": "100000",
     "fee_rate": "1.1",
-    "budget_toman": "175373"
+    "budget_toman": "226846"
    },
    "expected": {
     "principal_sats": "501",
     "btc": "0.00000501",
     "network_sats": "156",
+    "convert_sats": "20",
+    "transfer_sats": "423",
     "materials_sats": "50",
-    "post_sats": "750",
-    "operator_sats": "228",
-    "total_sats": "1745",
-    "total_toman": "175373",
-    "total_rial": "1753730",
-    "budget_toman": "175373",
+    "envelope_sats": "60",
+    "post_sats": "743",
+    "tag_sats": "0",
+    "operator_sats": "293",
+    "operator_toman": "29593",
+    "total_sats": "2246",
+    "total_toman": "226846",
+    "total_rial": "2268460",
+    "budget_toman": "226846",
     "remainder_toman": "0",
     "rates": {
-     "btc_toman": "10050000000",
-     "usdt_toman": "100500",
-     "satoshi_toman": "100.5"
+     "btc_toman": "10100000000",
+     "usdt_toman": "100000",
+     "satoshi_toman": "101"
     },
     "assumptions": {
-     "exchange_fee_percent": "0.5",
+     "exchange_fee_percent": "1",
      "operator_fee_percent": "15",
      "materials_usd": "0.05",
      "envelope_usd": "0.06",
@@ -351,21 +387,22 @@
      "network_fee_rate": "1.1",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01"
+     "print_usd": "0.01",
+     "convert_usd": "0.02",
+     "transfer_sats": "423"
     },
     "costs": {
      "network_sats": "156",
+     "convert_sats": "20",
+     "transfer_sats": "423",
      "materials_sats": "50",
      "envelope_sats": "60",
-     "post_sats": "750",
+     "post_sats": "743",
      "tag_sats": "0"
-    },
-    "tag_sats": "0",
-    "operator_toman": "22914",
-    "envelope_sats": "60"
+    }
    },
    "raw_asset_toman": "50100",
-   "next_principal_total_toman": "175473"
+   "next_principal_total_toman": "227048"
   },
   {
    "id": "budget_remainder",
@@ -374,27 +411,32 @@
     "btc_toman": "10000000000",
     "usdt_toman": "100000",
     "fee_rate": "1.1",
-    "budget_toman": "200000"
+    "budget_toman": "300000"
    },
    "expected": {
-    "principal_sats": "714",
-    "btc": "0.00000714",
+    "principal_sats": "1130",
+    "btc": "0.00001130",
     "network_sats": "156",
+    "convert_sats": "20",
+    "transfer_sats": "423",
     "materials_sats": "50",
-    "post_sats": "750",
-    "operator_sats": "260",
-    "total_sats": "1990",
-    "total_toman": "199995",
-    "total_rial": "1999950",
-    "budget_toman": "200000",
-    "remainder_toman": "5",
+    "envelope_sats": "60",
+    "post_sats": "743",
+    "tag_sats": "0",
+    "operator_sats": "388",
+    "operator_toman": "39188",
+    "total_sats": "2970",
+    "total_toman": "299970",
+    "total_rial": "2999700",
+    "budget_toman": "300000",
+    "remainder_toman": "30",
     "rates": {
-     "btc_toman": "10050000000",
-     "usdt_toman": "100500",
-     "satoshi_toman": "100.5"
+     "btc_toman": "10100000000",
+     "usdt_toman": "100000",
+     "satoshi_toman": "101"
     },
     "assumptions": {
-     "exchange_fee_percent": "0.5",
+     "exchange_fee_percent": "1",
      "operator_fee_percent": "15",
      "materials_usd": "0.05",
      "envelope_usd": "0.06",
@@ -406,21 +448,22 @@
      "network_fee_rate": "1.1",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01"
+     "print_usd": "0.01",
+     "convert_usd": "0.02",
+     "transfer_sats": "423"
     },
     "costs": {
      "network_sats": "156",
+     "convert_sats": "20",
+     "transfer_sats": "423",
      "materials_sats": "50",
      "envelope_sats": "60",
-     "post_sats": "750",
+     "post_sats": "743",
      "tag_sats": "0"
-    },
-    "tag_sats": "0",
-    "operator_toman": "26130",
-    "envelope_sats": "60"
+    }
    },
    "raw_asset_toman": "71400",
-   "next_principal_total_toman": "200096"
+   "next_principal_total_toman": "300071"
   },
   {
    "id": "budget_exact_3000",
@@ -429,27 +472,32 @@
     "btc_toman": "10000000000",
     "usdt_toman": "100000",
     "fee_rate": "1.1",
-    "budget_toman": "464210"
+    "budget_toman": "517120"
    },
    "expected": {
     "principal_sats": "3000",
     "btc": "0.00003000",
     "network_sats": "156",
+    "convert_sats": "20",
+    "transfer_sats": "423",
     "materials_sats": "50",
-    "post_sats": "750",
-    "operator_sats": "603",
-    "total_sats": "4619",
-    "total_toman": "464210",
-    "total_rial": "4642100",
-    "budget_toman": "464210",
+    "envelope_sats": "60",
+    "post_sats": "743",
+    "tag_sats": "0",
+    "operator_sats": "668",
+    "operator_toman": "67468",
+    "total_sats": "5120",
+    "total_toman": "517120",
+    "total_rial": "5171200",
+    "budget_toman": "517120",
     "remainder_toman": "0",
     "rates": {
-     "btc_toman": "10050000000",
-     "usdt_toman": "100500",
-     "satoshi_toman": "100.5"
+     "btc_toman": "10100000000",
+     "usdt_toman": "100000",
+     "satoshi_toman": "101"
     },
     "assumptions": {
-     "exchange_fee_percent": "0.5",
+     "exchange_fee_percent": "1",
      "operator_fee_percent": "15",
      "materials_usd": "0.05",
      "envelope_usd": "0.06",
@@ -461,21 +509,22 @@
      "network_fee_rate": "1.1",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01"
+     "print_usd": "0.01",
+     "convert_usd": "0.02",
+     "transfer_sats": "423"
     },
     "costs": {
      "network_sats": "156",
+     "convert_sats": "20",
+     "transfer_sats": "423",
      "materials_sats": "50",
      "envelope_sats": "60",
-     "post_sats": "750",
+     "post_sats": "743",
      "tag_sats": "0"
-    },
-    "tag_sats": "0",
-    "operator_toman": "60602",
-    "envelope_sats": "60"
+    }
    },
    "raw_asset_toman": "300000",
-   "next_principal_total_toman": "464310"
+   "next_principal_total_toman": "517221"
   },
   {
    "id": "budget_below_3000_boundary",
@@ -484,27 +533,32 @@
     "btc_toman": "10000000000",
     "usdt_toman": "100000",
     "fee_rate": "1.1",
-    "budget_toman": "464209"
+    "budget_toman": "517119"
    },
    "expected": {
     "principal_sats": "2999",
     "btc": "0.00002999",
     "network_sats": "156",
+    "convert_sats": "20",
+    "transfer_sats": "423",
     "materials_sats": "50",
-    "post_sats": "750",
-    "operator_sats": "603",
-    "total_sats": "4618",
-    "total_toman": "464109",
-    "total_rial": "4641090",
-    "budget_toman": "464209",
+    "envelope_sats": "60",
+    "post_sats": "743",
+    "tag_sats": "0",
+    "operator_sats": "668",
+    "operator_toman": "67468",
+    "total_sats": "5119",
+    "total_toman": "517019",
+    "total_rial": "5170190",
+    "budget_toman": "517119",
     "remainder_toman": "100",
     "rates": {
-     "btc_toman": "10050000000",
-     "usdt_toman": "100500",
-     "satoshi_toman": "100.5"
+     "btc_toman": "10100000000",
+     "usdt_toman": "100000",
+     "satoshi_toman": "101"
     },
     "assumptions": {
-     "exchange_fee_percent": "0.5",
+     "exchange_fee_percent": "1",
      "operator_fee_percent": "15",
      "materials_usd": "0.05",
      "envelope_usd": "0.06",
@@ -516,21 +570,22 @@
      "network_fee_rate": "1.1",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01"
+     "print_usd": "0.01",
+     "convert_usd": "0.02",
+     "transfer_sats": "423"
     },
     "costs": {
      "network_sats": "156",
+     "convert_sats": "20",
+     "transfer_sats": "423",
      "materials_sats": "50",
      "envelope_sats": "60",
-     "post_sats": "750",
+     "post_sats": "743",
      "tag_sats": "0"
-    },
-    "tag_sats": "0",
-    "operator_toman": "60602",
-    "envelope_sats": "60"
+    }
    },
    "raw_asset_toman": "299900",
-   "next_principal_total_toman": "464210"
+   "next_principal_total_toman": "517120"
   },
   {
    "id": "budget_above_table_limit",
@@ -542,24 +597,29 @@
     "budget_toman": "50000000"
    },
    "expected": {
-    "principal_sats": "431603",
-    "btc": "0.00431603",
+    "principal_sats": "429025",
+    "btc": "0.00429025",
     "network_sats": "156",
+    "convert_sats": "20",
+    "transfer_sats": "423",
     "materials_sats": "50",
-    "post_sats": "750",
-    "operator_sats": "64893",
-    "total_sats": "497512",
-    "total_toman": "49999956",
-    "total_rial": "499999560",
+    "envelope_sats": "60",
+    "post_sats": "743",
+    "tag_sats": "0",
+    "operator_sats": "64572",
+    "operator_toman": "6521772",
+    "total_sats": "495049",
+    "total_toman": "49999949",
+    "total_rial": "499999490",
     "budget_toman": "50000000",
-    "remainder_toman": "44",
+    "remainder_toman": "51",
     "rates": {
-     "btc_toman": "10050000000",
-     "usdt_toman": "100500",
-     "satoshi_toman": "100.5"
+     "btc_toman": "10100000000",
+     "usdt_toman": "100000",
+     "satoshi_toman": "101"
     },
     "assumptions": {
-     "exchange_fee_percent": "0.5",
+     "exchange_fee_percent": "1",
      "operator_fee_percent": "15",
      "materials_usd": "0.05",
      "envelope_usd": "0.06",
@@ -571,21 +631,22 @@
      "network_fee_rate": "1.1",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01"
+     "print_usd": "0.01",
+     "convert_usd": "0.02",
+     "transfer_sats": "423"
     },
     "costs": {
      "network_sats": "156",
+     "convert_sats": "20",
+     "transfer_sats": "423",
      "materials_sats": "50",
      "envelope_sats": "60",
-     "post_sats": "750",
+     "post_sats": "743",
      "tag_sats": "0"
-    },
-    "tag_sats": "0",
-    "operator_toman": "6521747",
-    "envelope_sats": "60"
+    }
    },
    "raw_asset_toman": "43160300",
-   "next_principal_total_toman": "50000057"
+   "next_principal_total_toman": "50000050"
   },
   {
    "id": "budget_fractional",
@@ -597,24 +658,29 @@
     "budget_toman": "50000001"
    },
    "expected": {
-    "principal_sats": "349555",
-    "btc": "0.00349555",
+    "principal_sats": "347389",
+    "btc": "0.00347389",
     "network_sats": "175",
-    "materials_sats": "41",
-    "post_sats": "601",
-    "operator_sats": "52564",
-    "total_sats": "402985",
-    "total_toman": "49999991",
-    "total_rial": "499999910",
+    "convert_sats": "16",
+    "transfer_sats": "423",
+    "materials_sats": "40",
+    "envelope_sats": "48",
+    "post_sats": "595",
+    "tag_sats": "0",
+    "operator_sats": "52303",
+    "operator_toman": "6521733",
+    "total_sats": "400989",
+    "total_toman": "49999863",
+    "total_rial": "499998630",
     "budget_toman": "50000001",
-    "remainder_toman": "10",
+    "remainder_toman": "138",
     "rates": {
-     "btc_toman": "12407407295.6290740639",
-     "usdt_toman": "99259.2592605",
-     "satoshi_toman": "124.074072956290740639"
+     "btc_toman": "12469135690.1346913478",
+     "usdt_toman": "98765.4321",
+     "satoshi_toman": "124.691356901346913478"
     },
     "assumptions": {
-     "exchange_fee_percent": "0.5",
+     "exchange_fee_percent": "1",
      "operator_fee_percent": "15",
      "materials_usd": "0.05",
      "envelope_usd": "0.06",
@@ -626,21 +692,22 @@
      "network_fee_rate": "1.23456789",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01"
+     "print_usd": "0.01",
+     "convert_usd": "0.02",
+     "transfer_sats": "423"
     },
     "costs": {
      "network_sats": "175",
-     "materials_sats": "41",
-     "envelope_sats": "49",
-     "post_sats": "601",
+     "convert_sats": "16",
+     "transfer_sats": "423",
+     "materials_sats": "40",
+     "envelope_sats": "48",
+     "post_sats": "595",
      "tag_sats": "0"
-    },
-    "tag_sats": "0",
-    "operator_toman": "6521830",
-    "envelope_sats": "49"
+    }
    },
-   "raw_asset_toman": "43155061.3396111105818968",
-   "next_principal_total_toman": "50000115"
+   "raw_asset_toman": "43154937.882822099347329",
+   "next_principal_total_toman": "50000112"
   },
   {
    "id": "budget_tiny_price_plateau_supply_bound",
@@ -655,21 +722,26 @@
     "principal_sats": "2100000000000000",
     "btc": "21000000.00000000",
     "network_sats": "1",
-    "materials_sats": "5000000",
-    "post_sats": "75000000",
-    "operator_sats": "315000012900001",
-    "total_sats": "2415000098900002",
+    "convert_sats": "1980199",
+    "transfer_sats": "423",
+    "materials_sats": "4950496",
+    "envelope_sats": "5940595",
+    "post_sats": "74257426",
+    "tag_sats": "0",
+    "operator_sats": "315000013069371",
+    "operator_toman": "1",
+    "total_sats": "2415000100198511",
     "total_toman": "1",
     "total_rial": "10",
     "budget_toman": "1",
     "remainder_toman": "0",
     "rates": {
-     "btc_toman": "0.000000000000000001005",
-     "usdt_toman": "0.000000000000000001005",
-     "satoshi_toman": "0.00000000000000000000000001005"
+     "btc_toman": "0.00000000000000000101",
+     "usdt_toman": "0.000000000000000001",
+     "satoshi_toman": "0.0000000000000000000000000101"
     },
     "assumptions": {
-     "exchange_fee_percent": "0.5",
+     "exchange_fee_percent": "1",
      "operator_fee_percent": "15",
      "materials_usd": "0.05",
      "envelope_usd": "0.06",
@@ -681,18 +753,19 @@
      "network_fee_rate": "0.000000000000000001",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01"
+     "print_usd": "0.01",
+     "convert_usd": "0.02",
+     "transfer_sats": "423"
     },
     "costs": {
      "network_sats": "1",
-     "materials_sats": "5000000",
-     "envelope_sats": "6000000",
-     "post_sats": "75000000",
+     "convert_sats": "1980199",
+     "transfer_sats": "423",
+     "materials_sats": "4950496",
+     "envelope_sats": "5940595",
+     "post_sats": "74257426",
      "tag_sats": "0"
-    },
-    "tag_sats": "0",
-    "operator_toman": "1",
-    "envelope_sats": "6000000"
+    }
    },
    "raw_asset_toman": "0.000000000021"
   },
@@ -703,27 +776,32 @@
     "btc_toman": "10000000000",
     "usdt_toman": "100000",
     "fee_rate": "1.1",
-    "budget_toman": "242707500000117485"
+    "budget_toman": "243915000000168670"
    },
    "expected": {
     "principal_sats": "2100000000000000",
     "btc": "21000000.00000000",
     "network_sats": "156",
+    "convert_sats": "20",
+    "transfer_sats": "423",
     "materials_sats": "50",
-    "post_sats": "750",
-    "operator_sats": "315000000000153",
-    "total_sats": "2415000000001169",
-    "total_toman": "242707500000117485",
-    "total_rial": "2427075000001174850",
-    "budget_toman": "242707500000117485",
+    "envelope_sats": "60",
+    "post_sats": "743",
+    "tag_sats": "0",
+    "operator_sats": "315000000000218",
+    "operator_toman": "31815000000022018",
+    "total_sats": "2415000000001670",
+    "total_toman": "243915000000168670",
+    "total_rial": "2439150000001686700",
+    "budget_toman": "243915000000168670",
     "remainder_toman": "0",
     "rates": {
-     "btc_toman": "10050000000",
-     "usdt_toman": "100500",
-     "satoshi_toman": "100.5"
+     "btc_toman": "10100000000",
+     "usdt_toman": "100000",
+     "satoshi_toman": "101"
     },
     "assumptions": {
-     "exchange_fee_percent": "0.5",
+     "exchange_fee_percent": "1",
      "operator_fee_percent": "15",
      "materials_usd": "0.05",
      "envelope_usd": "0.06",
@@ -735,18 +813,19 @@
      "network_fee_rate": "1.1",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01"
+     "print_usd": "0.01",
+     "convert_usd": "0.02",
+     "transfer_sats": "423"
     },
     "costs": {
      "network_sats": "156",
+     "convert_sats": "20",
+     "transfer_sats": "423",
      "materials_sats": "50",
      "envelope_sats": "60",
-     "post_sats": "750",
+     "post_sats": "743",
      "tag_sats": "0"
-    },
-    "tag_sats": "0",
-    "operator_toman": "31657500000015377",
-    "envelope_sats": "60"
+    }
    },
    "raw_asset_toman": "210000000000000000"
   },
@@ -757,27 +836,32 @@
     "btc_toman": "10000000000",
     "usdt_toman": "100000",
     "fee_rate": "1.1",
-    "budget_toman": "242707500000117484"
+    "budget_toman": "243915000000168669"
    },
    "expected": {
     "principal_sats": "2099999999999999",
     "btc": "20999999.99999999",
     "network_sats": "156",
+    "convert_sats": "20",
+    "transfer_sats": "423",
     "materials_sats": "50",
-    "post_sats": "750",
-    "operator_sats": "315000000000153",
-    "total_sats": "2415000000001168",
-    "total_toman": "242707500000117384",
-    "total_rial": "2427075000001173840",
-    "budget_toman": "242707500000117484",
+    "envelope_sats": "60",
+    "post_sats": "743",
+    "tag_sats": "0",
+    "operator_sats": "315000000000218",
+    "operator_toman": "31815000000022018",
+    "total_sats": "2415000000001669",
+    "total_toman": "243915000000168569",
+    "total_rial": "2439150000001685690",
+    "budget_toman": "243915000000168669",
     "remainder_toman": "100",
     "rates": {
-     "btc_toman": "10050000000",
-     "usdt_toman": "100500",
-     "satoshi_toman": "100.5"
+     "btc_toman": "10100000000",
+     "usdt_toman": "100000",
+     "satoshi_toman": "101"
     },
     "assumptions": {
-     "exchange_fee_percent": "0.5",
+     "exchange_fee_percent": "1",
      "operator_fee_percent": "15",
      "materials_usd": "0.05",
      "envelope_usd": "0.06",
@@ -789,21 +873,22 @@
      "network_fee_rate": "1.1",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01"
+     "print_usd": "0.01",
+     "convert_usd": "0.02",
+     "transfer_sats": "423"
     },
     "costs": {
      "network_sats": "156",
+     "convert_sats": "20",
+     "transfer_sats": "423",
      "materials_sats": "50",
      "envelope_sats": "60",
-     "post_sats": "750",
+     "post_sats": "743",
      "tag_sats": "0"
-    },
-    "tag_sats": "0",
-    "operator_toman": "31657500000015377",
-    "envelope_sats": "60"
+    }
    },
    "raw_asset_toman": "209999999999999900",
-   "next_principal_total_toman": "242707500000117485"
+   "next_principal_total_toman": "243915000000168670"
   },
   {
    "id": "budget_64_digits_supply_bound",
@@ -818,21 +903,26 @@
     "principal_sats": "2100000000000000",
     "btc": "21000000.00000000",
     "network_sats": "1410000",
+    "convert_sats": "1",
+    "transfer_sats": "423",
     "materials_sats": "1",
+    "envelope_sats": "1",
     "post_sats": "1",
-    "operator_sats": "315000000211501",
-    "total_sats": "2415000001621504",
-    "total_toman": "24270750016296115200000",
-    "total_rial": "242707500162961152000000",
+    "tag_sats": "0",
+    "operator_sats": "315000000211565",
+    "operator_toman": "3181500002136806500000",
+    "total_sats": "2415000001621992",
+    "total_toman": "24391500016382119200000",
+    "total_rial": "243915000163821192000000",
     "budget_toman": "9999999999999999999999999999999999999999999999999999999999999999",
-    "remainder_toman": "9999999999999999999999999999999999999999975729249983703884799999",
+    "remainder_toman": "9999999999999999999999999999999999999999975608499983617880799999",
     "rates": {
-     "btc_toman": "1004999999999999.999999999999999998995",
-     "usdt_toman": "0.000000000000000001005",
-     "satoshi_toman": "10049999.99999999999999999999999998995"
+     "btc_toman": "1009999999999999.99999999999999999899",
+     "usdt_toman": "0.000000000000000001",
+     "satoshi_toman": "10099999.9999999999999999999999999899"
     },
     "assumptions": {
-     "exchange_fee_percent": "0.5",
+     "exchange_fee_percent": "1",
      "operator_fee_percent": "15",
      "materials_usd": "0.05",
      "envelope_usd": "0.06",
@@ -844,18 +934,19 @@
      "network_fee_rate": "9999.999999999999999999",
      "seal_usd": "0.03",
      "paper_usd": "0.01",
-     "print_usd": "0.01"
+     "print_usd": "0.01",
+     "convert_usd": "0.02",
+     "transfer_sats": "423"
     },
     "costs": {
      "network_sats": "1410000",
+     "convert_sats": "1",
+     "transfer_sats": "423",
      "materials_sats": "1",
      "envelope_sats": "1",
      "post_sats": "1",
      "tag_sats": "0"
-    },
-    "tag_sats": "0",
-    "operator_toman": "3165750002125585050000",
-    "envelope_sats": "1"
+    }
    },
    "raw_asset_toman": "20999999999999999999999.999999999979"
   }

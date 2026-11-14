@@ -28,7 +28,8 @@ FIXTURE = ROOT / "core/src/test/resources/quote_calculator.json"
 
 # Row fields the app compares; the site's row also carries rates/assumptions/costs.
 ROW_KEYS = (
-    "principal_sats", "btc", "network_sats", "materials_sats", "envelope_sats", "post_sats", "tag_sats",
+    "principal_sats", "btc", "network_sats", "convert_sats", "transfer_sats", "materials_sats",
+    "envelope_sats", "post_sats", "tag_sats",
     "operator_sats", "operator_toman", "total_sats", "total_toman", "total_rial",
     "budget_toman", "remainder_toman",
 )
@@ -68,9 +69,10 @@ def refresh(pricing, fixture: dict) -> dict:
             row = pricing.quote_for_budget(
                 inputs["btc_toman"], inputs["usdt_toman"], inputs["fee_rate"],
                 inputs["budget_toman"], include_tag=include_tag, in_person=in_person)
-        expected = dict(case["expected"])
-        for key in ROW_KEYS:
-            expected[key] = as_text(row[key])
+        # Rebuild the expected block from the site's own row instead of patching the old one, so a
+        # key the site no longer publishes (for example a removed acquisition_sats) cannot survive
+        # in this copy.
+        expected: dict = {key: as_text(row[key]) for key in ROW_KEYS}
         expected["rates"] = {k: as_text(v) for k, v in row["rates"].items()}
         expected["assumptions"] = {k: as_text(v) for k, v in row["assumptions"].items()}
         expected["costs"] = {k: as_text(v) for k, v in row["costs"].items()}

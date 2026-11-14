@@ -771,7 +771,7 @@ public final class MainActivity extends Activity {
         }
         button(choices,"بدون برچسب؛ تغییر انتخاب",()->{includeTag=!includeTag;renderMarket();},false).setTag("tag-choice");
         button(choices,"ارسال پستی؛ تغییر به حضوری",()->{inPerson=!inPerson;renderMarket();},false).setTag("delivery-choice");
-        text(choices,"سرعت‌ها فقط اولویت پیشنهادی‌اند، نه تضمین زمان تأیید. مواد پاکت پنج سنت (مهر سه، کاغذ یک و چاپ یک) همیشه حساب می‌شود. در ارسال پستی، پاکت شش سنت و پست هفتاد و پنج سنت هم می‌آید؛ در تحویل حضوری فقط همان مواد می‌ماند. برچسب دوازده سنت با فرض هر تتر برابر یک دلار برآورد می‌شوند. کارمزد گرداننده پانزده درصدِ اصل و هزینه‌هاست. نرخ صرافی نیم درصد تعدیل دارد.",false);
+        text(choices,"سرعت‌ها فقط اولویت پیشنهادی‌اند، نه تضمین زمان تأیید. مواد پاکت پنج سنت (مهر سه، کاغذ یک و چاپ یک) همیشه حساب می‌شود. در ارسال پستی، پاکت شش سنت و پست هفتاد و پنج سنت هم می‌آید؛ در تحویل حضوری فقط همان مواد می‌ماند. برچسب دوازده سنت با فرض هر تتر برابر یک دلار برآورد می‌شوند. کارمزد گرداننده پانزده درصدِ اصل و هزینه‌هاست. نرخ بیت‌کوین یک بار یک درصد تعدیل دارد و نرخ تتر بدون تعدیل است. دو کارمزد ثابت صرافی هم جدا می‌آید: تبدیل دو سنت و انتقال چهارصد و بیست‌وسه ساتوشی. فقط هزینهٔ شبکه با انتخاب سرعت تغییر می‌کند؛ این دو کارمزد ثابت به سرعت، برچسب و تحویل وابسته نیستند.",false);
         marketTable=section("market-table","جدول برآورد",false);
         LinearLayout custom=section("custom-quote","محاسبهٔ مبلغ دلخواه",true);
         text(custom,"عدد صحیح مثبت با ارقام انگلیسی، بدون فاصله، جداکننده، اعشار یا صفر ابتدایی؛ حداکثر سی‌ودو رقم. اصل مبلغ از پانصد و یک ساتوشی تا سقف بیست‌ویک میلیون بیت‌کوین است.",false);
@@ -890,9 +890,11 @@ public final class MainActivity extends Activity {
         } catch(IllegalArgumentException invalid) {text(customResult,"مقدار معتبر نیست یا بودجه برای حداقل بسته کافی نیست. محدودیت ارقام و اصل مبلغ را بررسی کنید.",false);}
     }
     private void renderQuote(LinearLayout parent,JsonObject row) {
-        String[] fields={"principal_sats","btc","network_sats","materials_sats","envelope_sats","post_sats","tag_sats","operator_sats","operator_toman","total_sats","total_toman","total_rial","budget_toman","remainder_toman"};
-        String[] labels={"اصل؛ ساتوشی","معادل بیت‌کوین","شبکه؛ ساتوشی","مواد پاکت؛ ساتوشی","پاکت؛ ساتوشی","پست؛ ساتوشی","برچسب؛ ساتوشی","گرداننده؛ ساتوشی","درآمد گرداننده؛ تومان","جمع؛ ساتوشی","جمع پرداختی؛ تومان","معادل ریال","بودجه؛ تومان","باقی‌مانده؛ تومان — جزو موجودی پاکت نیست"};
-        for(int i=0;i<fields.length;i++) if(!row.get(fields[i]).isJsonNull()) {text(parent,labels[i],false);text(parent,row.get(fields[i]).getAsString(),true);}
+        String[] fields={"principal_sats","btc","network_sats","convert_sats","transfer_sats","materials_sats","envelope_sats","post_sats","tag_sats","operator_sats","operator_toman","total_sats","total_toman","total_rial","budget_toman","remainder_toman"};
+        String[] labels={"اصل؛ ساتوشی","معادل بیت‌کوین","شبکه (تحویل)؛ ساتوشی","کارمزد تبدیل؛ ساتوشی","کارمزد انتقال بیت‌کوین؛ ساتوشی","مواد پاکت؛ ساتوشی","پاکت؛ ساتوشی","پست؛ ساتوشی","برچسب؛ ساتوشی","گرداننده؛ ساتوشی","درآمد گرداننده؛ تومان","جمع؛ ساتوشی","جمع پرداختی؛ تومان","معادل ریال","بودجه؛ تومان","باقی‌مانده؛ تومان — جزو موجودی پاکت نیست"};
+        // A row from the older 0.5% model has no exchange fees at all, so an absent key is skipped
+        // instead of being rendered as a zero cost.
+        for(int i=0;i<fields.length;i++) {com.google.gson.JsonElement value=row.get(fields[i]);if(value==null||value.isJsonNull()) continue;text(parent,labels[i],false);text(parent,value.getAsString(),true);}
     }
     private void openPublic(String page) {
         if (!page.isEmpty() && !isPublicPage(page)) return;
